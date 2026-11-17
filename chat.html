@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vortex AI — Chat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="chat.css" />
+</head>
+<body>
+  <div class="app">
+
+    <!-- ============ BARRA LATERAL ============ -->
+    <aside class="sidebar">
+
+      <div class="sidebar-top">
+        <div class="brand">
+          <span class="brand-v">V</span>
+          <span class="brand-name">VORTEX</span>
+        </div>
+        <p class="brand-tag">Sua IA, sempre com você.</p>
+
+        <button class="btn-novo-chat" id="novo-chat" type="button">
+          <span class="icone">+</span> Novo chat
+        </button>
+
+        <div class="historico-titulo">
+          <span class="icone-relogio">&#9719;</span> Histórico de conversas
+        </div>
+
+        <ul class="lista-conversas" id="lista-conversas">
+          <!-- As conversas salvas aparecem aqui automaticamente -->
+        </ul>
+      </div>
+
+      <div class="sidebar-bottom">
+        <button class="btn-lateral" id="alternar-tema" type="button">
+          <span class="icone">&#9788;</span> Alternar tema
+        </button>
+        <button class="btn-lateral" id="sair" type="button">
+          <span class="icone">&#9211;</span> Sair
+        </button>
+      </div>
+
+    </aside>
+
+    <!-- ============ ÁREA PRINCIPAL ============ -->
+    <main class="conteudo">
+
+      <header class="chat-header">
+        <div class="chat-header-info">
+          <span class="avatar-v">V</span>
+          <div>
+            <h2>Vortex IA</h2>
+            <span class="status"><i class="dot"></i> Online</span>
+          </div>
+        </div>
+        <div class="janela-controles">
+          <span>&minus;</span>
+          <span>&#9723;</span>
+          <span>&times;</span>
+        </div>
+      </header>
+
+      <section class="mensagens" id="mensagens">
+        <div class="boas-vindas" id="boas-vindas">
+          <h1 id="saudacao">Olá!</h1>
+          <p>Como posso te ajudar hoje?</p>
+        </div>
+      </section>
+
+      <form class="form-chat" id="form-chat">
+        <button type="button" class="btn-anexo" title="Anexar">&#128206;</button>
+        <input
+          type="text"
+          id="mensagem"
+          class="campo-mensagem"
+          placeholder="Digite sua mensagem..."
+          autocomplete="off"
+        />
+        <button type="submit" class="btn-enviar" title="Enviar">&#10148;</button>
+      </form>
+
+    </main>
+  </div>
+
+ <script src="chat.js"></script>
+</body>
+</html>

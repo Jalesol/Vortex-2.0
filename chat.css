@@ -1,0 +1,421 @@
+/* =================================
+   VORTEX 2.0 - ESTILO DO CHAT
+================================= */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --azul: #007BFF;
+  --ciano: #00C8FF;
+  --texto: #e6eefb;
+  --texto-suave: #94A3B8;
+  --painel: rgba(5, 15, 30, 0.55);
+  --borda: rgba(0, 200, 255, 0.22);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  font-family: "Inter", system-ui, Arial, sans-serif;
+  color: var(--texto);
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.75)),
+    url(assets/img/29f805d23bab110d1f489955.png);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+/* ======= LAYOUT ======= */
+.app {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ======= BARRA LATERAL ======= */
+.sidebar {
+  width: 300px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 22px 18px;
+  background: rgba(3, 10, 22, 0.72);
+  backdrop-filter: blur(12px);
+  border-right: 1px solid var(--borda);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-v {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  font-family: "Orbitron", sans-serif;
+  font-weight: 900;
+  color: #fff;
+  border-radius: 9px;
+  background: linear-gradient(135deg, var(--azul), var(--ciano));
+  box-shadow: 0 0 14px rgba(0, 200, 255, 0.55);
+}
+
+.brand-name {
+  font-family: "Orbitron", sans-serif;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.brand-tag {
+  margin: 8px 0 20px;
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+
+.btn-novo-chat {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 15px;
+  color: var(--texto);
+  background: rgba(0, 123, 255, 0.08);
+  border: 1px solid var(--ciano);
+  border-radius: 30px;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.btn-novo-chat:hover {
+  background: rgba(0, 200, 255, 0.18);
+  box-shadow: 0 0 14px rgba(0, 200, 255, 0.35);
+}
+
+.btn-novo-chat .icone {
+  font-size: 18px;
+  color: var(--ciano);
+}
+
+.historico-titulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--texto-suave);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ======= LISTA DE CONVERSAS ======= */
+.lista-conversas {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  max-height: calc(100vh - 290px);
+}
+
+.lista-conversas li {
+  position: relative;
+  padding: 12px 14px;
+  font-size: 14px;
+  color: var(--texto);
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: 0.2s;
+}
+
+.lista-conversas li:hover {
+  background: rgba(0, 200, 255, 0.08);
+}
+
+.lista-conversas li.ativa {
+  background: rgba(0, 123, 255, 0.14);
+}
+
+.lista-conversas li.ativa::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--ciano);
+}
+
+/* ======= RODAPÉ DA LATERAL ======= */
+.sidebar-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.btn-lateral {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  font-size: 14px;
+  color: var(--texto-suave);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 30px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-lateral:hover {
+  color: var(--ciano);
+  border-color: var(--borda);
+  background: rgba(0, 200, 255, 0.06);
+}
+
+/* ======= ÁREA PRINCIPAL ======= */
+.conteudo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 26px;
+  background: rgba(3, 10, 22, 0.45);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--borda);
+}
+
+.chat-header-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar-v {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  font-family: "Orbitron", sans-serif;
+  font-weight: 900;
+  color: #fff;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--azul), var(--ciano));
+  box-shadow: 0 0 14px rgba(0, 200, 255, 0.5);
+}
+
+.chat-header-info h2 {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--texto-suave);
+}
+
+.status .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 8px #22c55e;
+}
+
+.janela-controles {
+  display: flex;
+  gap: 18px;
+  color: var(--texto-suave);
+  font-size: 15px;
+}
+
+.janela-controles span {
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.janela-controles span:hover {
+  color: #fff;
+}
+
+/* ======= MENSAGENS ======= */
+.mensagens {
+  flex: 1;
+  overflow-y: auto;
+  padding: 30px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.boas-vindas {
+  margin: auto 0;
+}
+
+.boas-vindas h1 {
+  font-size: 34px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.boas-vindas p {
+  font-size: 18px;
+  color: var(--texto-suave);
+}
+
+.mensagem {
+  max-width: 70%;
+  padding: 13px 18px;
+  font-size: 15px;
+  line-height: 1.5;
+  border-radius: 16px;
+  word-wrap: break-word;
+  animation: surgir 0.25s ease;
+}
+
+@keyframes surgir {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.mensagem.usuario {
+  align-self: flex-end;
+  background: linear-gradient(135deg, var(--azul), #0066d6);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.mensagem.vortex {
+  align-self: flex-start;
+  background: rgba(5, 20, 40, 0.75);
+  border: 1px solid var(--borda);
+  border-bottom-left-radius: 4px;
+}
+
+/* ======= EFEITO PENSANDO ======= */
+.mensagem.pensando {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.mensagem.pensando span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ciano);
+  animation: pulsar 1s infinite ease-in-out;
+}
+
+.mensagem.pensando span:nth-child(2) { animation-delay: 0.2s; }
+.mensagem.pensando span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes pulsar {
+  0%, 100% { opacity: 0.3; transform: translateY(0); }
+  50%      { opacity: 1; transform: translateY(-4px); }
+}
+
+/* ======= INPUT ======= */
+.form-chat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 30px 26px;
+  padding: 8px 10px 8px 16px;
+  background: rgba(3, 12, 26, 0.7);
+  border: 1px solid var(--ciano);
+  border-radius: 30px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 0 18px rgba(0, 200, 255, 0.12);
+}
+
+.campo-mensagem {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--texto);
+  font-size: 15px;
+  padding: 8px 4px;
+}
+
+.campo-mensagem::placeholder {
+  color: var(--texto-suave);
+}
+
+.btn-anexo {
+  background: transparent;
+  border: none;
+  color: var(--texto-suave);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.btn-enviar {
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--azul), var(--ciano));
+  box-shadow: 0 0 14px rgba(0, 200, 255, 0.4);
+  transition: 0.2s;
+}
+
+.btn-enviar:hover {
+  transform: scale(1.06);
+}
+
+/* ======= TEMA CLARO ======= */
+body.tema-claro {
+  background: linear-gradient(#eef3fb, #dce6f5);
+  color: #1b2a44;
+}
+
+body.tema-claro .sidebar,
+body.tema-claro .chat-header {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+body.tema-claro .mensagem.vortex {
+  background: #ffffff;
+  color: #1b2a44;
+}
+
+/* ======= RESPONSIVO ======= */
+@media (max-width: 760px) {
+  .sidebar { width: 90px; padding: 16px 8px; }
+  .brand-name, .brand-tag, .historico-titulo,
+  .lista-conversas, .btn-novo-chat span:last-child,
+  .btn-lateral span:last-child { display: none; }
+  .mensagem { max-width: 85%; }
+}

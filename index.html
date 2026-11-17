@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vortex</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <main class="container">
+
+        <div class="menus">
+
+            <!-- MENU PRIMÁRIO -->
+            <nav class="menu-primario">
+                <ul>
+                    <li><a href="#">Home</a></li>
+                    <li><a href="#">Sobre</a></li>
+                    <li><a href="#">Blog</a></li>
+                    <li><a href="#">Contato</a></li>
+                </ul>
+            </nav>
+
+            <!-- MENU SECUNDÁRIO -->
+            <nav class="menu-secundario">
+
+                <select name="idioma" id="Idioma">
+                    <option value="pt">Português</option>
+                    <option value="en">Inglês</option>
+                    <option value="es">Espanhol</option>
+                </select>
+
+                <ul>
+                    <li><button type="button" class="link-entrar" id="ir-login">Entrar</button></li>
+                    <li><button type="button" class="btn-register" id="ir-register">Register</button></li>
+                </ul>
+
+            </nav>
+
+        </div>
+
+        <!-- FORMULÁRIO -->
+        <section class="form">
+
+            <!-- LOGIN -->
+            <form id="form-login" novalidate>
+
+                <h2 class="form-titulo">Entrar na Vortex</h2>
+
+                <label class="campo">
+                    <span class="campo-rotulo">E-mail</span>
+                    <input
+                        type="email"
+                        name="email"
+                        id="email"
+                        placeholder="Digite seu e-mail"
+                        autocomplete="email"
+                        required
+                    >
+                </label>
+
+                <label class="campo">
+                    <span class="campo-rotulo">Senha</span>
+                    <input
+                        type="password"
+                        name="password"
+                        id="password"
+                        placeholder="Digite sua senha"
+                        autocomplete="current-password"
+                        required
+                    >
+                </label>
+
+                <a href="#" id="link-recuperar">Esqueceu sua senha?</a>
+
+                <p class="mensagem-erro" id="erro-login" role="alert"></p>
+
+                <button type="submit" id="btn-entrar">Entrar</button>
+
+                <hr>
+
+            </form>
+
+            <!-- CADASTRO -->
+            <form id="form-register" novalidate hidden>
+
+                <h2 class="form-titulo">Criar conta</h2>
+
+                <label class="campo">
+                    <span class="campo-rotulo">Nome</span>
+                    <input
+                        type="text"
+                        name="nome"
+                        id="nome"
+                        placeholder="Como podemos te chamar?"
+                        autocomplete="name"
+                        required
+                    >
+                </label>
+
+                <label class="campo">
+                    <span class="campo-rotulo">E-mail</span>
+                    <input
+                        type="email"
+                        name="email-register"
+                        id="email-register"
+                        placeholder="Digite seu e-mail"
+                        autocomplete="email"
+                        required
+                    >
+                </label>
+
+                <label class="campo">
+                    <span class="campo-rotulo">Senha</span>
+                    <input
+                        type="password"
+                        name="password-register"
+                        id="password-register"
+                        placeholder="Mínimo de 8 caracteres"
+                        autocomplete="new-password"
+                        required
+                    >
+                </label>
+
+                <p class="mensagem-erro" id="erro-register" role="alert"></p>
+
+                <button type="submit" id="btn-register">Criar minha conta</button>
+
+                <hr>
+
+            </form>
+
+            <!-- LOGIN SOCIAL -->
+            <div class="login">
+                <p>Ou continue com</p>
+
+                <div class="botoes-sociais">
+                    <button type="button" class="botao-social" id="login-google" title="Entrar com Google">
+                        <img src="assets/img/icons8-google-logo-48.png" alt="Google">
+                    </button>
+
+                    <button type="button" class="botao-social" id="login-facebook" title="Entrar com Facebook">
+                        <img src="assets/img/icons8-facebook-novo-48.png" alt="Facebook">
+                    </button>
+                </div>
+
+                <p class="aviso-social" id="aviso-social" role="status"></p>
+            </div>
+
+        </section>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+
+</body>
+</html>
