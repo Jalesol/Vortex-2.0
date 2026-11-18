@@ -1,2 +1,9 @@
-.env
 node_modules/
+
+.env
+.env.*
+
+memoria.json
+assets/img/
+
+npm-debug.log*

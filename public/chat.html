@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Vortex AI — Chat</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="chat.css" />
+</head>
+
+<body>
+
+    <div class="tela-carregando" id="carregando">
+        <p>Verificando sua sessão...</p>
+    </div>
+
+    <div class="app" id="app" hidden>
+
+        <aside class="sidebar">
+
+            <div class="sidebar-top">
+
+                <div class="brand">
+                    <span class="brand-v">V</span>
+                    <span class="brand-name">VORTEX</span>
+                </div>
+
+                <p class="brand-tag">Sua IA, sempre com você.</p>
+
+                <button class="btn-novo-chat" id="novo-chat" type="button">
+                    <span class="icone">+</span>
+                    <span>Novo chat</span>
+                </button>
+
+                <div class="historico-titulo">
+                    <span class="icone-relogio">◷</span>
+                    Histórico de conversas
+                </div>
+
+                <ul class="lista-conversas" id="lista-conversas"></ul>
+
+            </div>
+
+            <div class="sidebar-bottom">
+
+                <button class="btn-lateral" id="alternar-tema" type="button">
+                    <span class="icone">☼</span>
+                    <span>Alternar tema</span>
+                </button>
+
+                <button class="btn-lateral" id="sair" type="button">
+                    <span class="icone">⇥</span>
+                    <span>Sair</span>
+                </button>
+
+            </div>
+
+        </aside>
+
+        <main class="conteudo">
+
+            <header class="chat-header">
+
+                <div class="chat-header-info">
+
+                    <span class="avatar-v">V</span>
+
+                    <div>
+                        <h2>Vortex IA</h2>
+
+                        <span class="status">
+                            <i class="dot"></i>
+                            Online
+                        </span>
+                    </div>
+
+                </div>
+
+            </header>
+
+            <section
+                class="mensagens"
+                id="mensagens"
+                aria-live="polite"
+                aria-label="Conversa com a Vortex"
+            >
+
+                <div class="boas-vindas" id="boas-vindas">
+                    <h1 id="saudacao">Olá!</h1>
+                    <p>Como posso te ajudar hoje?</p>
+                </div>
+
+            </section>
+
+            <div
+                class="arquivo-pdf-status"
+                id="arquivo-pdf-status"
+                hidden
+            >
+                <span id="arquivo-pdf-nome"></span>
+
+                <button
+                    type="button"
+                    id="remover-pdf"
+                    title="Remover PDF"
+                    aria-label="Remover PDF"
+                >
+                    ×
+                </button>
+            </div>
+
+            <form class="chat-form" id="form-chat">
+
+                <input
+                    type="file"
+                    id="arquivo-pdf"
+                    accept="application/pdf,.pdf"
+                    hidden
+                />
+
+                <!-- Anexar PDF -->
+                <button
+                    type="button"
+                    class="btn-anexar"
+                    id="btn-anexar"
+                    title="Anexar documento PDF"
+                    aria-label="Anexar documento PDF"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        width="21"
+                        height="21"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                    >
+                        <path d="M12 20.5H7a4 4 0 0 1 0-8h10a3 3 0 0 0 0-6H8" />
+                        <path d="m8 3 4 3.5L8 10" />
+                    </svg>
+                </button>
+
+                <!-- Microfone -->
+                <button
+                    type="button"
+                    class="btn-microfone"
+                    id="btn-microfone"
+                    title="Falar com a Vortex"
+                    aria-label="Iniciar reconhecimento de voz"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        width="21"
+                        height="21"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                    >
+                        <rect x="9" y="2" width="6" height="13" rx="3" />
+                        <path d="M5 10v2a7 7 0 0 0 14 0v-2" />
+                        <path d="M12 19v3" />
+                        <path d="M9 22h6" />
+                    </svg>
+                </button>
+
+                <!-- Campo de mensagem -->
+                <textarea
+                    id="mensagem"
+                    class="campo-mensagem"
+                    placeholder="Converse com a Vortex..."
+                    autocomplete="off"
+                    rows="1"
+                ></textarea>
+
+                <!-- Enviar -->
+                <button
+                    type="submit"
+                    class="btn-enviar"
+                    title="Enviar mensagem"
+                    aria-label="Enviar mensagem"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        width="21"
+                        height="21"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                    >
+                        <path d="M12 19V5" />
+                        <path d="m5 12 7-7 7 7" />
+                    </svg>
+                </button>
+
+            </form>
+
+        </main>
+
+    </div>
+
+    <!-- Leitor de PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+    <!-- Formatação das respostas -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
+
+    <!-- Geração de PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.3/html2pdf.bundle.min.js"></script>
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Sistema da Vortex -->
+    <script src="chat.js"></script>
+
+</body>
+</html>

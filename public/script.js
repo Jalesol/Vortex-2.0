@@ -31,7 +31,17 @@ const btnFacebook = document.querySelector("#login-facebook");
 const avisoSocial = document.querySelector("#aviso-social");
 const linkRecuperar = document.querySelector("#link-recuperar");
 
-// ============ VALIDAÇÃO ============
+/* ============ CONTROLE DE NAVEGAÇÃO ============ */
+
+let indoParaChat = false;
+
+function irParaChat() {
+    if (indoParaChat) return;
+    indoParaChat = true;
+    window.location.replace("chat.html");
+}
+
+/* ============ VALIDAÇÃO ============ */
 
 const PADRAO_EMAIL = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
 
@@ -49,12 +59,14 @@ function mostrarErro(elemento, mensagem) {
     if (!elemento) return;
     elemento.style.color = "#FF6470";
     elemento.textContent = mensagem;
+    elemento.hidden = false;
 }
 
 function mostrarSucesso(elemento, mensagem) {
     if (!elemento) return;
     elemento.style.color = "#00C8FF";
     elemento.textContent = mensagem;
+    elemento.hidden = false;
 }
 
 function marcarInvalido(campo, invalido) {
@@ -62,7 +74,7 @@ function marcarInvalido(campo, invalido) {
     campo.classList.toggle("campo-invalido", invalido);
 }
 
-// ============ TRADUZIR ERROS DO SUPABASE ============
+/* ============ TRADUZIR ERROS ============ */
 
 function traduzirErro(mensagem) {
     const texto = String(mensagem || "").toLowerCase();
@@ -102,7 +114,7 @@ function traduzirErro(mensagem) {
     return "Algo deu errado. Tente novamente.";
 }
 
-// ============ ALTERNAR TELAS ============
+/* ============ ALTERNAR TELAS ============ */
 
 function mostrarLogin() {
     if (formRegister) formRegister.hidden = true;
@@ -123,7 +135,7 @@ function mostrarRegister() {
 if (irLogin) irLogin.addEventListener("click", mostrarLogin);
 if (irRegister) irRegister.addEventListener("click", mostrarRegister);
 
-// ============ LOGIN ============
+/* ============ LOGIN ============ */
 
 if (formLogin) {
     formLogin.addEventListener("submit", async function (event) {
@@ -177,20 +189,22 @@ if (formLogin) {
             }
 
             mostrarSucesso(erroLogin, "Entrando...");
-            window.location.href = "chat.html";
+            irParaChat();
 
         } catch (erro) {
             console.error("Erro no login:", erro);
             mostrarErro(erroLogin, "Não foi possível conectar. Tente novamente.");
 
         } finally {
-            btnEntrar.disabled = false;
-            btnEntrar.textContent = "Entrar";
+            if (!indoParaChat) {
+                btnEntrar.disabled = false;
+                btnEntrar.textContent = "Entrar";
+            }
         }
     });
 }
 
-// ============ CADASTRO ============
+/* ============ CADASTRO ============ */
 
 if (formRegister) {
     formRegister.addEventListener("submit", async function (event) {
@@ -258,7 +272,7 @@ if (formRegister) {
             }
 
             if (data.session) {
-                window.location.href = "chat.html";
+                irParaChat();
                 return;
             }
 
@@ -273,13 +287,15 @@ if (formRegister) {
             mostrarErro(erroRegister, "Não foi possível conectar. Tente novamente.");
 
         } finally {
-            btnRegister.disabled = false;
-            btnRegister.textContent = "Criar minha conta";
+            if (!indoParaChat) {
+                btnRegister.disabled = false;
+                btnRegister.textContent = "Criar minha conta";
+            }
         }
     });
 }
 
-// ============ LOGIN SOCIAL ============
+/* ============ LOGIN SOCIAL ============ */
 
 async function entrarComProvedor(provedor) {
     if (avisoSocial) {
@@ -297,10 +313,9 @@ async function entrarComProvedor(provedor) {
         if (error) {
             console.error("Erro no login social:", error);
             if (avisoSocial) {
-                avisoSocial.textContent =
-                    provedor === "google"
-                        ? "Login com Google ainda não está configurado no projeto."
-                        : "Login com Facebook ainda não está configurado no projeto.";
+                avisoSocial.textContent = "Login com " +
+                    (provedor === "google" ? "Google" : "Facebook") +
+                    " ainda não está configurado no projeto.";
             }
         }
     } catch (erro) {
@@ -323,7 +338,7 @@ if (btnFacebook) {
     });
 }
 
-// ============ RECUPERAR SENHA ============
+/* ============ RECUPERAR SENHA ============ */
 
 if (linkRecuperar) {
     linkRecuperar.addEventListener("click", async function (event) {
@@ -352,18 +367,32 @@ if (linkRecuperar) {
     });
 }
 
-// ============ SESSÃO EXISTENTE ============
+/* ============ SESSÃO JÁ ABERTA ============ */
 
-async function verificarSessao() {
+/*
+   Só manda para o chat quando o servidor confirma o usuário.
+   getSession() sozinho não serve: ele pode devolver um token
+   vencido por um instante, o que causava o vaivém entre telas.
+*/
+async function temSessaoValida() {
     try {
-        const { data } = await clienteSupabase.auth.getSession();
+        const { data, error } = await clienteSupabase.auth.getUser();
 
-        if (data && data.session) {
-            window.location.href = "chat.html";
-        }
+        if (error) return false;
+
+        return !!(data && data.user);
+
     } catch (erro) {
-        console.error("Erro ao verificar sessão:", erro);
+        return false;
     }
 }
 
-verificarSessao();
+async function iniciarTela() {
+    const validando = await temSessaoValida();
+
+    if (validando) {
+        irParaChat();
+    }
+}
+
+iniciarTela();
