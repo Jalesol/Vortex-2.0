@@ -1,17 +1,28 @@
-
 /* =================================
    VORTEX 2.0 - SISTEMA DE CHAT
-   Gemini AI + Memória permanente
+   Gemini AI + memória no Supabase
 ================================= */
 
-// CONFIGURAÇÃO DAS APIs
-const API_URL = "http://localhost:3000/api/chat";
-const API_MEMORIA_URL = "http://localhost:3000/api/memory";
+const SUPABASE_URL = "https://ytoykihtjcsttnmizbou.supabase.co";
+const SUPABASE_KEY = "sb_publishable_7TFboQCIOTNwKLWsTlmTXg_jFCRM-IH";
 
-// DADOS DO USUÁRIO
-const nomeUsuario = localStorage.getItem("vortexNome") || "";
+const clienteSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ELEMENTOS HTML
+const API_BASE = (window.location.hostname === "localhost" ||
+                  window.location.hostname === "127.0.0.1")
+    ? "http://localhost:3000"
+    : "";
+
+const API_URL = API_BASE + "/api/chat";
+const API_MEMORIA_URL = API_BASE + "/api/memory";
+
+let usuarioAtual = null;
+let conversaAtual = [];
+let conversas = [];
+let enviando = false;
+
+const app = document.querySelector("#app");
+const carregando = document.querySelector("#carregando");
 const saudacao = document.querySelector("#saudacao");
 const formularioChat = document.querySelector("#form-chat");
 const campoMensagem = document.querySelector("#mensagem");
@@ -21,22 +32,128 @@ const botaoSair = document.querySelector("#sair");
 const botaoTema = document.querySelector("#alternar-tema");
 const listaConversas = document.querySelector("#lista-conversas");
 
-// CONVERSAS
-let conversas = JSON.parse(
-    localStorage.getItem("vortexConversas") || "[]"
-);
+/* ============ PROTEÇÃO DE ROTA ============ */
 
-let conversaAtual = [];
-let enviando = false;
+async function iniciar() {
+    try {
+        const { data } = await clienteSupabase.auth.getSession();
 
-// SAUDAÇÃO
-if (saudacao) {
-    saudacao.textContent = nomeUsuario
-        ? `Olá, ${nomeUsuario}!`
-        : "Olá! Como posso te chamar?";
+        if (!data || !data.session) {
+            window.location.replace("index.html");
+            return;
+        }
+
+        usuarioAtual = data.session.user;
+
+        const nome = (usuarioAtual.user_metadata && usuarioAtual.user_metadata.nome)
+            || (usuarioAtual.email || "").split("@")[0]
+            || "Visitante";
+
+        usuarioAtual.nomeExibicao = nome;
+
+        if (saudacao) {
+            saudacao.textContent = "Olá, " + nome + "!";
+        }
+
+        carregarConversasSalvas();
+        carregarTema();
+        atualizarHistorico();
+
+        if (carregando) carregando.remove();
+        app.hidden = false;
+
+        if (campoMensagem) campoMensagem.focus();
+
+    } catch (erro) {
+        console.error("Erro ao iniciar o chat:", erro);
+        window.location.replace("index.html");
+    }
 }
 
-// CRIAR MENSAGEM
+clienteSupabase.auth.onAuthStateChange(function (evento) {
+    if (evento === "SIGNED_OUT") {
+        window.location.replace("index.html");
+    }
+});
+
+/* ============ TOKEN ============ */
+
+async function obterToken() {
+    const { data } = await clienteSupabase.auth.getSession();
+
+    if (!data || !data.session) {
+        throw new Error("Sessão expirada. Entre novamente.");
+    }
+
+    const expiraEm = data.session.expires_at * 1000;
+
+    if (Date.now() > expiraEm - 60000) {
+        const { data: renovado, error } = await clienteSupabase.auth.refreshSession();
+
+        if (error || !renovado.session) {
+            throw new Error("Sessão expirada. Entre novamente.");
+        }
+
+        return renovado.session.access_token;
+    }
+
+    return data.session.access_token;
+}
+
+async function chamarApi(url, opcoes) {
+    const config = opcoes || {};
+    const token = await obterToken();
+
+    const resposta = await fetch(url, {
+        method: config.method || "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+        },
+        body: config.body
+    });
+
+    let dados = {};
+
+    try {
+        dados = await resposta.json();
+    } catch (erro) {
+        dados = {};
+    }
+
+    if (!resposta.ok) {
+        throw new Error(dados.error || "Falha na comunicação com o servidor.");
+    }
+
+    return dados;
+}
+
+/* ============ CONVERSAS LOCAIS ============ */
+
+function chaveConversas() {
+    return "vortexConversas_" + usuarioAtual.id;
+}
+
+function carregarConversasSalvas() {
+    try {
+        const bruto = localStorage.getItem(chaveConversas());
+        const dados = JSON.parse(bruto || "[]");
+        conversas = Array.isArray(dados) ? dados : [];
+    } catch (erro) {
+        conversas = [];
+    }
+}
+
+function salvarConversas() {
+    try {
+        localStorage.setItem(chaveConversas(), JSON.stringify(conversas));
+    } catch (erro) {
+        console.error("Não foi possível salvar as conversas:", erro);
+    }
+}
+
+/* ============ MENSAGENS ============ */
+
 function criarMensagem(texto, tipo) {
     const mensagem = document.createElement("div");
 
@@ -49,7 +166,29 @@ function criarMensagem(texto, tipo) {
     return mensagem;
 }
 
-// SALVAR CONVERSA
+function mostrarPensamento() {
+    const pensamento = document.createElement("div");
+
+    pensamento.classList.add("mensagem", "vortex", "pensando");
+
+    for (let i = 0; i < 3; i++) {
+        pensamento.appendChild(document.createElement("span"));
+    }
+
+    areaMensagens.appendChild(pensamento);
+    areaMensagens.scrollTop = areaMensagens.scrollHeight;
+
+    return pensamento;
+}
+
+function removerBoasVindas() {
+    const boasVindas = document.querySelector("#boas-vindas");
+
+    if (boasVindas) boasVindas.remove();
+}
+
+/* ============ HISTÓRICO DE CONVERSAS ============ */
+
 function salvarConversa() {
     if (conversaAtual.length === 0) return;
 
@@ -58,11 +197,8 @@ function salvarConversa() {
 
     const conversa = {
         id: id,
-        mensagens: conversaAtual.map(function (mensagem) {
-            return {
-                texto: mensagem.texto,
-                tipo: mensagem.tipo
-            };
+        mensagens: conversaAtual.map(function (m) {
+            return { texto: m.texto, tipo: m.tipo };
         })
     };
 
@@ -76,15 +212,10 @@ function salvarConversa() {
         conversas.unshift(conversa);
     }
 
-    localStorage.setItem(
-        "vortexConversas",
-        JSON.stringify(conversas)
-    );
-
+    salvarConversas();
     atualizarHistorico();
 }
 
-// ATUALIZAR HISTÓRICO
 function atualizarHistorico() {
     if (!listaConversas) return;
 
@@ -94,9 +225,7 @@ function atualizarHistorico() {
         const item = document.createElement("li");
         const primeira = conversa.mensagens[0];
 
-        item.textContent = primeira
-            ? primeira.texto
-            : "Nova conversa";
+        item.textContent = primeira ? primeira.texto : "Nova conversa";
 
         if (conversaAtual.id === conversa.id) {
             item.classList.add("ativa");
@@ -111,7 +240,6 @@ function atualizarHistorico() {
     });
 }
 
-// ABRIR CONVERSA
 function abrirConversa(id) {
     const conversa = conversas.find(function (item) {
         return item.id === id;
@@ -119,182 +247,71 @@ function abrirConversa(id) {
 
     if (!conversa) return;
 
-    conversaAtual = conversa.mensagens.map(function (mensagem) {
-        return {
-            texto: mensagem.texto,
-            tipo: mensagem.tipo
-        };
+    conversaAtual = conversa.mensagens.map(function (m) {
+        return { texto: m.texto, tipo: m.tipo };
     });
 
     conversaAtual.id = conversa.id;
 
     areaMensagens.innerHTML = "";
 
-    conversaAtual.forEach(function (mensagem) {
-        criarMensagem(mensagem.texto, mensagem.tipo);
+    conversaAtual.forEach(function (m) {
+        criarMensagem(m.texto, m.tipo);
     });
 
+    areaMensagens.scrollTop = areaMensagens.scrollHeight;
     atualizarHistorico();
 }
 
-// INDICADOR DE DIGITAÇÃO
-function mostrarPensamento() {
-    const pensamento = document.createElement("div");
-
-    pensamento.classList.add(
-        "mensagem",
-        "vortex",
-        "pensando"
-    );
-
-    pensamento.innerHTML = `
-        <span></span>
-        <span></span>
-        <span></span>
-    `;
-
-    areaMensagens.appendChild(pensamento);
-    areaMensagens.scrollTop = areaMensagens.scrollHeight;
-
-    return pensamento;
-}
-
-// PREPARAR HISTÓRICO PARA GEMINI
 function prepararHistorico() {
     return conversaAtual
         .slice(0, -1)
-        .map(function (mensagem) {
+        .slice(-20)
+        .map(function (m) {
             return {
-                role: mensagem.tipo === "usuario"
-                    ? "user"
-                    : "model",
-                text: mensagem.texto
+                role: m.tipo === "usuario" ? "user" : "model",
+                text: m.texto
             };
         });
 }
 
-// IDENTIFICAR PEDIDO PARA GUARDAR
-function identificarInformacaoParaGuardar(texto) {
-    const padrao = /^(?:vortex[,:]\s*)?(?:lembre-se(?:\s+de)?|guarde|memorize|não\s+esqueça)(?:\s+que)?\s*[:,\-]?\s*(.+)$/i;
+/* ============ MEMÓRIA ============ */
 
-    const resultado = texto.trim().match(padrao);
-
-    if (!resultado || !resultado[1]) {
-        return null;
-    }
-
-    return resultado[1].trim();
-}
-
-// IDENTIFICAR PEDIDO PARA ESQUECER
-function identificarInformacaoParaEsquecer(texto) {
-    const padrao = /^(?:vortex[,:]\s*)?(?:esqueça|esqueca|apague|remova|exclua)(?:\s+que)?\s*[:,\-]?\s*(.+)$/i;
-
-    const resultado = texto.trim().match(padrao);
-
-    if (!resultado || !resultado[1]) {
-        return null;
-    }
-
-    return resultado[1].trim();
-}
-
-// CONSULTAR MEMÓRIA
 async function consultarMemoria() {
-    const resposta = await fetch(API_MEMORIA_URL);
-
-    const dados = await resposta.json();
-
-    if (!resposta.ok) {
-        throw new Error(
-            dados.error || "Não foi possível consultar a memória."
-        );
-    }
-
-    return dados.memories || [];
+    const dados = await chamarApi(API_MEMORIA_URL);
+    return Array.isArray(dados.memories) ? dados.memories : [];
 }
 
-// SALVAR MEMÓRIA
 async function salvarMemoriaPermanente(fact) {
-    const resposta = await fetch(API_MEMORIA_URL, {
+    return await chamarApi(API_MEMORIA_URL, {
         method: "POST",
-
-        headers: {
-            "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-            fact: fact
-        })
+        body: JSON.stringify({ fact: fact })
     });
-
-    const dados = await resposta.json();
-
-    if (!resposta.ok) {
-        throw new Error(
-            dados.error || "Não foi possível salvar a memória."
-        );
-    }
-
-    return dados;
 }
 
-// EXCLUIR UMA MEMÓRIA
 async function excluirMemoria(fact) {
-    const resposta = await fetch(
-        `${API_MEMORIA_URL}/delete`,
-        {
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-                fact: fact
-            })
-        }
-    );
-
-    const dados = await resposta.json();
-
-    if (!resposta.ok) {
-        throw new Error(
-            dados.error || "Não foi possível excluir a memória."
-        );
-    }
-
-    return dados;
+    return await chamarApi(API_MEMORIA_URL + "/delete", {
+        method: "POST",
+        body: JSON.stringify({ fact: fact })
+    });
 }
 
-// LIMPAR TODA A MEMÓRIA
 async function limparTodaMemoria() {
-    const resposta = await fetch(
-        `${API_MEMORIA_URL}/clear`,
-        {
-            method: "POST"
-        }
-    );
-
-    const dados = await resposta.json();
-
-    if (!resposta.ok) {
-        throw new Error(
-            dados.error || "Não foi possível limpar a memória."
-        );
-    }
-
-    return dados;
+    return await chamarApi(API_MEMORIA_URL + "/clear", {
+        method: "POST",
+        body: JSON.stringify({})
+    });
 }
 
-// IDENTIFICAR E EXECUTAR COMANDOS DE MEMÓRIA
+const PADRAO_GUARDAR = /^(?:vortex[,:]\s*)?(?:lembre-se(?:\s+de)?|guarde|memorize|n[ãa]o\s+esque[çc]a)(?:\s+que)?\s*[:,\-]?\s*(.+)$/i;
+const PADRAO_ESQUECER = /^(?:vortex[,:]\s*)?(?:esque[çc]a|apague|remova|exclua)(?:\s+que)?\s*[:,\-]?\s*(.+)$/i;
+const PADRAO_CONSULTAR = /^(?:vortex[,:]\s*)?(?:o\s+que\s+voc[êe]\s+lembra|o\s+que\s+sabe\s+sobre\s+mim|mostre\s+sua\s+mem[óo]ria|consultar\s+mem[óo]ria|ver\s+mem[óo]ria)/i;
+const PADRAO_LIMPAR = /^(?:vortex[,:]\s*)?(?:apague|apagar|limpe|limpar|exclua|excluir)\s+(?:toda\s+)?(?:a\s+)?(?:sua\s+)?mem[óo]ria(?:\s+permanente)?[.!]?$/i;
+
 async function executarComandoMemoria(texto) {
     const mensagem = texto.trim();
 
-    // CONSULTAR MEMÓRIA
-    if (
-        /^(?:vortex[,:]\s*)?(?:o que você lembra|o que voce lembra|o que sabe sobre mim|o que você sabe sobre mim|mostre sua memória|mostre sua memoria|consultar memória|consultar memoria|ver memória|ver memoria)/i.test(mensagem)
-    ) {
+    if (PADRAO_CONSULTAR.test(mensagem)) {
         const memorias = await consultarMemoria();
 
         if (memorias.length === 0) {
@@ -302,17 +319,14 @@ async function executarComandoMemoria(texto) {
         }
 
         return "Estas são as informações que guardo na minha memória:\n\n" +
-            memorias.map((item, indice) =>
-                `${indice + 1}. ${item}`
-            ).join("\n");
+            memorias.map(function (item, indice) {
+                return (indice + 1) + ". " + item;
+            }).join("\n");
     }
 
-    // LIMPAR TODA A MEMÓRIA
-    if (
-        /^(?:vortex[,:]\s*)?(?:apague|apagar|limpe|limpar|exclua|excluir)\s+(?:toda\s+)?(?:a\s+)?(?:sua\s+)?mem[oó]ria(?:\s+permanente)?[.!]?$/i.test(mensagem)
-    ) {
+    if (PADRAO_LIMPAR.test(mensagem)) {
         const confirmar = window.confirm(
-            "Tem certeza de que deseja apagar TODAS as informações da memória permanente da Vortex?"
+            "Tem certeza de que deseja apagar TODAS as informações da memória da Vortex?"
         );
 
         if (!confirmar) {
@@ -320,72 +334,46 @@ async function executarComandoMemoria(texto) {
         }
 
         const resultado = await limparTodaMemoria();
-
         return resultado.message;
     }
 
-    // EXCLUIR UMA INFORMAÇÃO
-    const informacaoParaEsquecer =
-        identificarInformacaoParaEsquecer(mensagem);
+    const paraEsquecer = mensagem.match(PADRAO_ESQUECER);
 
-    if (informacaoParaEsquecer) {
-        const resultado = await excluirMemoria(
-            informacaoParaEsquecer
-        );
-
+    if (paraEsquecer && paraEsquecer[1]) {
+        const resultado = await excluirMemoria(paraEsquecer[1].trim());
         return resultado.message;
     }
 
-    // GUARDAR UMA INFORMAÇÃO
-    const informacaoParaGuardar =
-        identificarInformacaoParaGuardar(mensagem);
+    const paraGuardar = mensagem.match(PADRAO_GUARDAR);
 
-    if (informacaoParaGuardar) {
-        const resultado = await salvarMemoriaPermanente(
-            informacaoParaGuardar
-        );
-
+    if (paraGuardar && paraGuardar[1]) {
+        const resultado = await salvarMemoriaPermanente(paraGuardar[1].trim());
         return resultado.message;
     }
 
     return null;
 }
 
-// CONVERSAR COM A GEMINI
+/* ============ IA ============ */
+
 async function responderComIA(texto) {
-    const historico = prepararHistorico();
-
-    const resposta = await fetch(API_URL, {
+    const dados = await chamarApi(API_URL, {
         method: "POST",
-
-        headers: {
-            "Content-Type": "application/json"
-        },
-
         body: JSON.stringify({
             message: texto,
-            history: historico
+            history: prepararHistorico()
         })
     });
 
-    const dados = await resposta.json();
-
-    if (!resposta.ok) {
-        throw new Error(
-            dados.error || "Erro ao consultar a inteligência artificial."
-        );
-    }
-
     if (!dados.reply) {
-        throw new Error(
-            "A Vortex não recebeu uma resposta válida."
-        );
+        throw new Error("A Vortex não recebeu uma resposta válida.");
     }
 
     return dados.reply;
 }
 
-// ENVIAR MENSAGEM
+/* ============ ENVIAR ============ */
+
 async function enviarMensagem(event) {
     event.preventDefault();
 
@@ -395,145 +383,118 @@ async function enviarMensagem(event) {
 
     if (!texto) return;
 
-    const boasVindas = document.querySelector("#boas-vindas");
-
-    if (boasVindas) {
-        boasVindas.remove();
-    }
-
+    removerBoasVindas();
     criarMensagem(texto, "usuario");
 
-    conversaAtual.push({
-        texto: texto,
-        tipo: "usuario"
-    });
+    conversaAtual.push({ texto: texto, tipo: "usuario" });
 
     if (!conversaAtual.id) {
         conversaAtual.id = Date.now();
     }
 
     campoMensagem.value = "";
-
     enviando = true;
+    campoMensagem.disabled = true;
 
-    if (campoMensagem) {
-        campoMensagem.disabled = true;
-    }
+    const botaoEnviar = formularioChat.querySelector('button[type="submit"]');
 
-    const botaoEnviar = formularioChat.querySelector(
-        'button[type="submit"]'
-    );
-
-    if (botaoEnviar) {
-        botaoEnviar.disabled = true;
-    }
+    if (botaoEnviar) botaoEnviar.disabled = true;
 
     const pensamento = mostrarPensamento();
 
     try {
-        // PRIMEIRO, VERIFICAR COMANDOS DE MEMÓRIA
         let resposta = await executarComandoMemoria(texto);
 
-        // SE NÃO FOR UM COMANDO, CONSULTAR A GEMINI
         if (resposta === null) {
             resposta = await responderComIA(texto);
         }
 
         pensamento.remove();
-
         criarMensagem(resposta, "vortex");
 
-        conversaAtual.push({
-            texto: resposta,
-            tipo: "vortex"
-        });
-
+        conversaAtual.push({ texto: resposta, tipo: "vortex" });
         salvarConversa();
 
     } catch (erro) {
         pensamento.remove();
-
         console.error("Erro na Vortex:", erro);
 
-        const mensagemErro =
-            `Não consegui executar essa ação. ${erro.message}`;
+        if (erro.message.indexOf("expirada") !== -1 ||
+            erro.message.indexOf("Sessão") !== -1) {
+            window.location.replace("index.html");
+            return;
+        }
 
-        criarMensagem(mensagemErro, "vortex");
+        const mensagemErro = "Não consegui responder. " + erro.message;
 
-        conversaAtual.push({
-            texto: mensagemErro,
-            tipo: "vortex"
-        });
-
+        criarMensagem(mensagemErro, "erro");
+        conversaAtual.push({ texto: mensagemErro, tipo: "vortex" });
         salvarConversa();
 
     } finally {
         enviando = false;
+        campoMensagem.disabled = false;
+        campoMensagem.focus();
 
-        if (campoMensagem) {
-            campoMensagem.disabled = false;
-            campoMensagem.focus();
-        }
-
-        if (botaoEnviar) {
-            botaoEnviar.disabled = false;
-        }
+        if (botaoEnviar) botaoEnviar.disabled = false;
     }
 }
 
-// NOVO CHAT
+/* ============ NOVO CHAT ============ */
+
 function novoChat() {
     if (enviando) return;
 
     salvarConversa();
-
     conversaAtual = [];
 
-    areaMensagens.innerHTML = `
-        <div class="boas-vindas" id="boas-vindas">
-            <h1>Olá, ${nomeUsuario || "Visitante"}!</h1>
-            <p>Como posso te ajudar hoje?</p>
-        </div>
-    `;
+    const nome = usuarioAtual ? usuarioAtual.nomeExibicao : "Visitante";
+
+    areaMensagens.innerHTML =
+        '<div class="boas-vindas" id="boas-vindas">' +
+        "<h1>Olá, " + nome + "!</h1>" +
+        "<p>Como posso te ajudar hoje?</p>" +
+        "</div>";
 
     atualizarHistorico();
-
-    if (campoMensagem) {
-        campoMensagem.focus();
-    }
+    campoMensagem.focus();
 }
 
-// ALTERNAR TEMA
+/* ============ TEMA ============ */
+
 function alternarTema() {
     document.body.classList.toggle("tema-claro");
 
-    const temaAtual = document.body.classList.contains("tema-claro")
+    const tema = document.body.classList.contains("tema-claro")
         ? "claro"
         : "escuro";
 
-    localStorage.setItem("vortexTema", temaAtual);
+    localStorage.setItem("vortexTema", tema);
 }
 
-// CARREGAR TEMA
 function carregarTema() {
-    const temaSalvo = localStorage.getItem("vortexTema");
-
-    document.body.classList.toggle(
-        "tema-claro",
-        temaSalvo === "claro"
-    );
+    const salvo = localStorage.getItem("vortexTema");
+    document.body.classList.toggle("tema-claro", salvo === "claro");
 }
 
-// SAIR
-function sair() {
+/* ============ SAIR ============ */
+
+async function sair() {
     if (enviando) return;
 
     salvarConversa();
 
-    window.location.href = "index.html";
+    try {
+        await clienteSupabase.auth.signOut();
+    } catch (erro) {
+        console.error("Erro ao encerrar sessão:", erro);
+    }
+
+    window.location.replace("index.html");
 }
 
-// EVENTOS
+/* ============ EVENTOS ============ */
+
 if (formularioChat) {
     formularioChat.addEventListener("submit", enviarMensagem);
 }
@@ -550,6 +511,4 @@ if (botaoSair) {
     botaoSair.addEventListener("click", sair);
 }
 
-// INICIALIZAÇÃO
-carregarTema();
-atualizarHistorico();
+iniciar();

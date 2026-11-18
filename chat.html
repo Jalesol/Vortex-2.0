@@ -10,9 +10,13 @@
   <link rel="stylesheet" href="chat.css" />
 </head>
 <body>
-  <div class="app">
 
-    <!-- ============ BARRA LATERAL ============ -->
+  <div class="tela-carregando" id="carregando">
+    <p>Verificando sua sessão...</p>
+  </div>
+
+  <div class="app" id="app" hidden>
+
     <aside class="sidebar">
 
       <div class="sidebar-top">
@@ -23,30 +27,27 @@
         <p class="brand-tag">Sua IA, sempre com você.</p>
 
         <button class="btn-novo-chat" id="novo-chat" type="button">
-          <span class="icone">+</span> Novo chat
+          <span class="icone">+</span> <span>Novo chat</span>
         </button>
 
         <div class="historico-titulo">
           <span class="icone-relogio">&#9719;</span> Histórico de conversas
         </div>
 
-        <ul class="lista-conversas" id="lista-conversas">
-          <!-- As conversas salvas aparecem aqui automaticamente -->
-        </ul>
+        <ul class="lista-conversas" id="lista-conversas"></ul>
       </div>
 
       <div class="sidebar-bottom">
         <button class="btn-lateral" id="alternar-tema" type="button">
-          <span class="icone">&#9788;</span> Alternar tema
+          <span class="icone">&#9788;</span> <span>Alternar tema</span>
         </button>
         <button class="btn-lateral" id="sair" type="button">
-          <span class="icone">&#9211;</span> Sair
+          <span class="icone">&#9211;</span> <span>Sair</span>
         </button>
       </div>
 
     </aside>
 
-    <!-- ============ ÁREA PRINCIPAL ============ -->
     <main class="conteudo">
 
       <header class="chat-header">
@@ -57,11 +58,6 @@
             <span class="status"><i class="dot"></i> Online</span>
           </div>
         </div>
-        <div class="janela-controles">
-          <span>&minus;</span>
-          <span>&#9723;</span>
-          <span>&times;</span>
-        </div>
       </header>
 
       <section class="mensagens" id="mensagens">
@@ -71,8 +67,7 @@
         </div>
       </section>
 
-      <form class="form-chat" id="form-chat">
-        <button type="button" class="btn-anexo" title="Anexar">&#128206;</button>
+      <form class="chat-form" id="form-chat">
         <input
           type="text"
           id="mensagem"
@@ -86,6 +81,7 @@
     </main>
   </div>
 
- <script src="chat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="chat.js"></script>
 </body>
 </html>

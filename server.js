@@ -1,93 +1,201 @@
+/* =================================
+   VORTEX 2.0 - SERVIDOR
+   Gemini AI + memória no Supabase
+================================= */
 
 require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
-const fs = require("fs/promises");
-const path = require("path");
+const { createClient } = require("@supabase/supabase-js");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const ARQUIVO_MEMORIA = path.join(__dirname, "memoria.json");
+const MODELO_PRINCIPAL = "gemini-3.8-flash";
+const MODELO_RESERVA = "gemini-3.7-flash";
 
-app.use(cors());
+const supabaseAdmin = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SECRET_KEY,
+    {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false
+        }
+    }
+);
+
+const ORIGENS_PERMITIDAS = [
+    "http://localhost:3000",
+    "http://localhost:5500",
+    "http://127.0.0.1:5500",
+    process.env.SITE_URL
+].filter(Boolean);
+
+app.use(cors({
+    origin: function (origem, callback) {
+        if (!origem || ORIGENS_PERMITIDAS.includes(origem)) {
+            return callback(null, true);
+        }
+        return callback(new Error("Origem não permitida."));
+    }
+}));
+
 app.use(express.json({ limit: "1mb" }));
 
-// MODELOS DA VORTEX
-const MODELO_PRINCIPAL = "gemini-3.6-flash";
-const MODELO_RESERVA = "gemini-3.5-flash";
+/* ============ AUTENTICAÇÃO ============ */
 
-// MEMÓRIA
-let memoriaPermanente = [];
-
-const memoriaInicial = [
-    "O nome do usuário é Lucas.",
-    "O projeto de inteligência artificial do usuário se chama Vortex 2.0.",
-    "O usuário está desenvolvendo a Vortex utilizando JavaScript."
-];
-
-// CARREGAR MEMÓRIA
-async function carregarMemoria() {
+async function autenticar(req, res, next) {
     try {
-        const conteudo = await fs.readFile(
-            ARQUIVO_MEMORIA,
-            "utf8"
-        );
+        const cabecalho = req.headers.authorization || "";
 
-        const dados = JSON.parse(conteudo);
-
-        memoriaPermanente = Array.isArray(dados.memories)
-            ? dados.memories.filter(item => typeof item === "string")
-            : [];
-
-        console.log(
-            `Memória carregada: ${memoriaPermanente.length} informações.`
-        );
-
-    } catch (erro) {
-        if (erro.code !== "ENOENT") {
-            throw erro;
+        if (!cabecalho.startsWith("Bearer ")) {
+            return res.status(401).json({ error: "Não autenticado." });
         }
 
-        memoriaPermanente = [...memoriaInicial];
+        const token = cabecalho.slice(7);
 
-        await salvarMemoria();
+        const { data, error } = await supabaseAdmin.auth.getUser(token);
 
-        console.log("Arquivo de memória criado!");
+        if (error || !data.user) {
+            return res.status(401).json({ error: "Sessão inválida." });
+        }
+
+        req.usuario = data.user;
+        next();
+
+    } catch (erro) {
+        console.error("Erro na autenticação:", erro.message);
+        return res.status(401).json({ error: "Sessão inválida." });
     }
 }
 
-// SALVAR MEMÓRIA NO ARQUIVO
-async function salvarMemoria() {
-    const dados = {
-        memories: memoriaPermanente
-    };
+/* ============ MEMÓRIA ============ */
 
-    await fs.writeFile(
-        ARQUIVO_MEMORIA,
-        JSON.stringify(dados, null, 4),
-        "utf8"
-    );
+async function listarMemorias(userId) {
+    const { data, error } = await supabaseAdmin
+        .from("memorias")
+        .select("conteudo")
+        .eq("user_id", userId)
+        .order("criado_em", { ascending: true });
+
+    if (error) throw new Error(error.message);
+
+    return (data || []).map(function (linha) {
+        return linha.conteudo;
+    });
 }
 
-// TESTE DO SERVIDOR
-app.get("/api/health", (req, res) => {
+/* ============ GEMINI ============ */
+
+function erroTemporario(erro) {
+    const mensagem = String(erro.message || erro);
+    return /503|UNAVAILABLE|429|RESOURCE_EXHAUSTED|500|INTERNAL/i.test(mensagem);
+}
+
+function esperar(ms) {
+    return new Promise(function (resolve) {
+        setTimeout(resolve, ms);
+    });
+}
+
+let ai = null;
+
+async function carregarGemini() {
+    const { GoogleGenAI } = await import("@google/genai");
+
+    ai = new GoogleGenAI({
+        apiKey: process.env.GEMINI_API_KEY
+    });
+}
+
+async function consultarModelo(modelo, contents, memorias) {
+    const contexto = memorias.length > 0
+        ? "INFORMAÇÕES IMPORTANTES SOBRE O USUÁRIO:\n\n" +
+          memorias.map(function (item) {
+              return "- " + item;
+          }).join("\n") +
+          "\n\nUse essas informações quando forem relevantes. " +
+          "Não invente informações que não estejam registradas. " +
+          "Se algo não estiver na memória, pergunte ao usuário."
+        : "Nenhuma informação permanente sobre o usuário foi registrada.";
+
+    const nome = process.env.NOME_DESENVOLVEDOR || "Lucas Jales de Oliveira";
+
+    return await ai.models.generateContent({
+        model: modelo,
+        contents: contents,
+        config: {
+            systemInstruction:
+                "Seu nome é Vortex.\n\n" +
+                "Você é uma assistente de inteligência artificial desenvolvida por " +
+                nome + ".\n\n" +
+                "Responda em português brasileiro.\n\n" +
+                "Seja inteligente, educada, objetiva, prestativa e natural.\n\n" +
+                "Explique assuntos técnicos de maneira clara e ajude o usuário com " +
+                "programação, tecnologia, estudos e projetos.\n\n" +
+                contexto
+        }
+    });
+}
+
+async function tentarModelo(modelo, contents, memorias, tentativas) {
+    let ultimoErro = null;
+
+    for (let i = 0; i < tentativas; i++) {
+        try {
+            return await consultarModelo(modelo, contents, memorias);
+
+        } catch (erro) {
+            ultimoErro = erro;
+
+            const mensagem = String(erro.message || erro);
+            console.log("Falha em " + modelo + " (" + (i + 1) + "/" + tentativas + "): " +
+                mensagem.slice(0, 100));
+
+            if (/404|NOT_FOUND/i.test(mensagem)) break;
+            if (!erroTemporario(erro)) break;
+
+            await esperar(1500 * (i + 1));
+        }
+    }
+
+    throw ultimoErro;
+}
+
+async function gerarResposta(contents, memorias) {
+    try {
+        return await tentarModelo(MODELO_PRINCIPAL, contents, memorias, 3);
+
+    } catch (erro) {
+        console.log("Principal falhou, ativando reserva...");
+    }
+
+    return await tentarModelo(MODELO_RESERVA, contents, memorias, 2);
+}
+
+/* ============ ROTAS ============ */
+
+app.get("/api/health", function (req, res) {
     res.json({
         status: "online",
         message: "Servidor da Vortex funcionando!"
     });
 });
 
-// CONSULTAR MEMÓRIA
-app.get("/api/memory", (req, res) => {
-    res.json({
-        memories: memoriaPermanente
-    });
+app.get("/api/memory", autenticar, async function (req, res) {
+    try {
+        const memorias = await listarMemorias(req.usuario.id);
+        res.json({ memories: memorias });
+
+    } catch (erro) {
+        console.error("Erro ao consultar memória:", erro.message);
+        res.status(500).json({ error: "Não foi possível consultar a memória." });
+    }
 });
 
-// ADICIONAR INFORMAÇÃO
-app.post("/api/memory", async (req, res) => {
+app.post("/api/memory", autenticar, async function (req, res) {
     try {
         const { fact } = req.body;
 
@@ -97,17 +205,19 @@ app.post("/api/memory", async (req, res) => {
             });
         }
 
-        const novaInformacao = fact.trim();
+        const conteudo = fact.trim();
 
-        if (novaInformacao.length > 500) {
+        if (conteudo.length > 500) {
             return res.status(400).json({
                 error: "A informação deve ter no máximo 500 caracteres."
             });
         }
 
-        const jaExiste = memoriaPermanente.some(
-            item => item.toLowerCase() === novaInformacao.toLowerCase()
-        );
+        const memorias = await listarMemorias(req.usuario.id);
+
+        const jaExiste = memorias.some(function (item) {
+            return item.toLowerCase() === conteudo.toLowerCase();
+        });
 
         if (jaExiste) {
             return res.json({
@@ -116,11 +226,14 @@ app.post("/api/memory", async (req, res) => {
             });
         }
 
-        memoriaPermanente.push(novaInformacao);
+        const { error } = await supabaseAdmin
+            .from("memorias")
+            .insert({
+                user_id: req.usuario.id,
+                conteudo: conteudo
+            });
 
-        await salvarMemoria();
-
-        console.log("Nova memória salva:", novaInformacao);
+        if (error) throw new Error(error.message);
 
         res.json({
             success: true,
@@ -129,15 +242,13 @@ app.post("/api/memory", async (req, res) => {
 
     } catch (erro) {
         console.error("Erro ao salvar memória:", erro.message);
-
         res.status(500).json({
             error: "Não foi possível salvar a memória."
         });
     }
 });
 
-// EXCLUIR UMA INFORMAÇÃO ESPECÍFICA
-app.post("/api/memory/delete", async (req, res) => {
+app.post("/api/memory/delete", autenticar, async function (req, res) {
     try {
         const { fact } = req.body;
 
@@ -149,13 +260,13 @@ app.post("/api/memory/delete", async (req, res) => {
 
         const termo = fact.trim().toLowerCase();
 
-        const quantidadeAnterior = memoriaPermanente.length;
+        const memorias = await listarMemorias(req.usuario.id);
 
-        memoriaPermanente = memoriaPermanente.filter(
-            item => !item.toLowerCase().includes(termo)
-        );
+        const alvo = memorias.filter(function (item) {
+            return item.toLowerCase().includes(termo);
+        });
 
-        if (memoriaPermanente.length === quantidadeAnterior) {
+        if (alvo.length === 0) {
             return res.json({
                 success: true,
                 deleted: false,
@@ -163,9 +274,13 @@ app.post("/api/memory/delete", async (req, res) => {
             });
         }
 
-        await salvarMemoria();
+        const { error } = await supabaseAdmin
+            .from("memorias")
+            .delete()
+            .eq("user_id", req.usuario.id)
+            .in("conteudo", alvo);
 
-        console.log("Memória excluída:", fact);
+        if (error) throw new Error(error.message);
 
         res.json({
             success: true,
@@ -175,21 +290,20 @@ app.post("/api/memory/delete", async (req, res) => {
 
     } catch (erro) {
         console.error("Erro ao excluir memória:", erro.message);
-
         res.status(500).json({
             error: "Não foi possível excluir a informação."
         });
     }
 });
 
-// LIMPAR TODA A MEMÓRIA
-app.post("/api/memory/clear", async (req, res) => {
+app.post("/api/memory/clear", autenticar, async function (req, res) {
     try {
-        memoriaPermanente = [];
+        const { error } = await supabaseAdmin
+            .from("memorias")
+            .delete()
+            .eq("user_id", req.usuario.id);
 
-        await salvarMemoria();
-
-        console.log("Toda a memória permanente foi apagada.");
+        if (error) throw new Error(error.message);
 
         res.json({
             success: true,
@@ -198,236 +312,97 @@ app.post("/api/memory/clear", async (req, res) => {
 
     } catch (erro) {
         console.error("Erro ao limpar memória:", erro.message);
-
         res.status(500).json({
             error: "Não foi possível limpar a memória."
         });
     }
 });
 
-// IDENTIFICAR ERROS TEMPORÁRIOS
-function erroTemporario(error) {
-    const mensagem = String(error.message || error);
-
-    return /503|UNAVAILABLE|429|RESOURCE_EXHAUSTED|500|INTERNAL/i
-        .test(mensagem);
-}
-
-// AGUARDAR
-function esperar(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-// CONSULTAR MODELO
-async function consultarModelo(ai, modelo, contents) {
-    const contextoMemoria = memoriaPermanente.length > 0
-        ? `
-            INFORMAÇÕES IMPORTANTES SOBRE O USUÁRIO:
-
-            ${memoriaPermanente.map(item => `- ${item}`).join("\n")}
-
-            Utilize essas informações quando forem relevantes.
-            Não invente informações que não estejam registradas.
-            Se uma informação não estiver na memória, pergunte ao usuário.
-        `
-        : "Nenhuma informação permanente sobre o usuário foi registrada.";
-
-    return await ai.models.generateContent({
-        model: modelo,
-        contents: contents,
-        config: {
-            systemInstruction: `
-                Seu nome é Vortex.
-
-                Você é uma assistente de inteligência
-                artificial desenvolvida por Lucas
-                Jales de Oliveira.
-
-                Responda em português brasileiro.
-
-                Seja inteligente, educada, objetiva,
-                prestativa e natural.
-
-                Explique assuntos técnicos de maneira
-                clara e ajude o usuário com programação,
-                tecnologia, estudos e projetos.
-
-                ${contextoMemoria}
-            `
-        }
-    });
-}
-
-// TENTAR MODELO PRINCIPAL E RESERVA
-async function gerarResposta(ai, contents) {
+app.post("/api/chat", autenticar, async function (req, res) {
     try {
-        console.log("Consultando Gemini 3.6 Flash...");
+        const { message } = req.body;
+        const history = Array.isArray(req.body.history) ? req.body.history : [];
 
-        return await consultarModelo(
-            ai,
-            MODELO_PRINCIPAL,
-            contents
-        );
+        if (typeof message !== "string" || !message.trim()) {
+            return res.status(400).json({ error: "Digite uma mensagem." });
+        }
+
+        const historicoSeguro = history
+            .filter(function (item) {
+                return item &&
+                    ["user", "model"].indexOf(item.role) !== -1 &&
+                    typeof item.text === "string";
+            })
+            .slice(-20)
+            .map(function (item) {
+                return {
+                    role: item.role,
+                    parts: [{ text: item.text.slice(0, 8000) }]
+                };
+            });
+
+        const contents = historicoSeguro.concat([{
+            role: "user",
+            parts: [{ text: message.trim() }]
+        }]);
+
+        const memorias = await listarMemorias(req.usuario.id);
+
+        const resposta = await gerarResposta(contents, memorias);
+        const texto = resposta.text;
+
+        if (!texto) {
+            throw new Error("A Gemini não retornou uma resposta.");
+        }
+
+        res.json({ reply: texto });
 
     } catch (erro) {
-        console.error("Erro no modelo principal:", erro.message);
-
-        if (!erroTemporario(erro)) {
-            throw erro;
-        }
-
-        console.log("Tentando novamente em 2 segundos...");
-
-        await esperar(2000);
-
-        try {
-            return await consultarModelo(
-                ai,
-                MODELO_PRINCIPAL,
-                contents
-            );
-
-        } catch (segundoErro) {
-            console.error(
-                "Segunda tentativa falhou:",
-                segundoErro.message
-            );
-
-            if (!erroTemporario(segundoErro)) {
-                throw segundoErro;
-            }
-        }
+        console.error("Erro na conversa:", erro.message);
+        res.status(500).json({
+            error: "A Vortex não conseguiu responder. " + erro.message
+        });
     }
+});
 
-    console.log("Ativando Gemini 3.5 Flash...");
+/* ============ INICIAR ============ */
 
-    try {
-        return await consultarModelo(
-            ai,
-            MODELO_RESERVA,
-            contents
-        );
-
-    } catch (erroReserva) {
-        console.error(
-            "Modelo reserva também falhou:",
-            erroReserva.message
-        );
-
-        throw erroReserva;
-    }
-}
-
-// INICIAR SERVIDOR
 async function iniciarServidor() {
     try {
         if (!process.env.GEMINI_API_KEY) {
-            throw new Error(
-                "GEMINI_API_KEY não encontrada no .env"
-            );
+            throw new Error("GEMINI_API_KEY não encontrada no .env");
         }
 
-        await carregarMemoria();
+        if (!process.env.SUPABASE_URL) {
+            throw new Error("SUPABASE_URL não encontrada no .env");
+        }
 
-        const { GoogleGenAI } = await import("@google/genai");
+        if (!process.env.SUPABASE_SECRET_KEY) {
+            throw new Error("SUPABASE_SECRET_KEY não encontrada no .env");
+        }
 
-        const ai = new GoogleGenAI({
-            apiKey: process.env.GEMINI_API_KEY
-        });
+        await carregarGemini();
 
-        console.log("SDK Gemini carregado.");
-
-        // ROTA DE CHAT
-        app.post("/api/chat", async (req, res) => {
-            try {
-                const { message, history = [] } = req.body;
-
-                if (
-                    typeof message !== "string" ||
-                    !message.trim()
-                ) {
-                    return res.status(400).json({
-                        error: "Digite uma mensagem."
-                    });
-                }
-
-                const historicoSeguro = Array.isArray(history)
-                    ? history
-                        .filter(item =>
-                            item &&
-                            ["user", "model"].includes(item.role) &&
-                            typeof item.text === "string"
-                        )
-                        .slice(-20)
-                        .map(item => ({
-                            role: item.role,
-                            parts: [{
-                                text: item.text.slice(0, 8000)
-                            }]
-                        }))
-                    : [];
-
-                const contents = [
-                    ...historicoSeguro,
-                    {
-                        role: "user",
-                        parts: [{
-                            text: message.trim()
-                        }]
-                    }
-                ];
-
-                console.log("Mensagem recebida:", message);
-                console.log(
-                    "Informações na memória:",
-                    memoriaPermanente.length
-                );
-
-                const resposta = await gerarResposta(ai, contents);
-
-                const texto = resposta.text;
-
-                if (!texto) {
-                    throw new Error(
-                        "A Gemini não retornou uma resposta."
-                    );
-                }
-
-                console.log("Resposta enviada com sucesso!");
-
-                res.json({
-                    reply: texto
-                });
-
-            } catch (erro) {
-                console.error("Erro na conversa:", erro.message);
-
-                res.status(500).json({
-                    error: "A Vortex não conseguiu responder. " +
-                        erro.message
-                });
-            }
-        });
-
-        app.listen(PORT, () => {
+        app.listen(PORT, function () {
             console.log("--------------------------------");
             console.log(" VORTEX AI - SERVIDOR ONLINE");
             console.log("--------------------------------");
-            console.log(`Servidor: http://localhost:${PORT}`);
-            console.log(`API: http://localhost:${PORT}/api/chat`);
-            console.log(`Memória: http://localhost:${PORT}/api/memory`);
-            console.log(`Modelo principal: ${MODELO_PRINCIPAL}`);
-            console.log(`Modelo reserva: ${MODELO_RESERVA}`);
+            console.log("Servidor: http://localhost:" + PORT);
+            console.log("Modelo: " + MODELO_PRINCIPAL);
+            console.log("Reserva: " + MODELO_RESERVA);
             console.log("--------------------------------");
         });
 
-    } catch (erro) {
-        console.error(
-            "Erro ao iniciar servidor:",
-            erro.message
-        );
+  } catch (erro) {
+        console.error("Erro na conversa:", erro.message);
 
-        process.exit(1);
+        const temporario = erroTemporario(erro);
+
+        res.status(temporario ? 503 : 500).json({
+            error: temporario
+                ? "Estou com muita demanda agora. Tente de novo em alguns segundos."
+                : "A Vortex não conseguiu responder."
+        });
     }
 }
 
