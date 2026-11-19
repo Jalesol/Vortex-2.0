@@ -35,19 +35,46 @@ const groq = new OpenAI({
     baseURL: "https://api.groq.com/openai/v1"
 });
 
+/* ============ CORS ============ */
+
+// Domínio principal e endereços de implantação da Vercel.
 const ORIGENS_PERMITIDAS = [
+    "https://vortex-20.vercel.app",
+    "https://vortex-20-git-main-jalesol.vercel.app",
+    "https://vortex-20-fwf5sh4lf-jalesol.vercel.app",
     process.env.SITE_URL
 ].filter(Boolean);
 
-/* ============ MIDDLEWARES ============ */
+function origemPermitida(origem) {
+    if (!origem) {
+        return true;
+    }
+
+    // Endereços locais para desenvolvimento.
+    const local = /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+)(:\d+)?$/.test(origem);
+
+    if (local) {
+        return true;
+    }
+
+    // Domínios cadastrados explicitamente.
+    if (ORIGENS_PERMITIDAS.includes(origem)) {
+        return true;
+    }
+
+    // URLs de implantação e preview deste projeto na Vercel.
+    const dominioVercel = /^https:\/\/vortex-20(?:-[a-z0-9-]+)?-jalesol\.vercel\.app$/.test(origem);
+
+    return dominioVercel;
+}
 
 app.use(cors({
     origin: function (origem, callback) {
-        const local = /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+)(:\d+)?$/.test(origem || "");
-
-        if (!origem || local || ORIGENS_PERMITIDAS.includes(origem)) {
+        if (origemPermitida(origem)) {
             return callback(null, true);
         }
+
+        console.error("Origem bloqueada pelo CORS:", origem);
 
         return callback(new Error("Origem não permitida."));
     }
