@@ -1,10 +1,10 @@
 
 /* =================================
-   VORTEX 2.0 - SISTEMA DE CHAT
-   IA via Groq + memória no Supabase
-   Leitura de PDF com PDF.js
-   Formatação Markdown + geração de PDF
-   Idiomas: Português, Inglês e Espanhol
+      VORTEX 2.0 - SISTEMA DE CHAT
+      IA via Groq + memória no Supabase
+      Leitura de PDF com PDF.js
+      Formatação Markdown + geração de PDF
+      Idiomas: Português, Inglês e Espanhol
 ================================= */
 
 const SUPABASE_URL = "https://ytoykihtjcsttnmizbou.supabase.co";
@@ -262,7 +262,6 @@ function alterarIdioma(novoIdioma) {
     }
 
     idiomaAtual = novoIdioma;
-
     localStorage.setItem(CHAVE_IDIOMA, idiomaAtual);
 
     atualizarIdioma();
@@ -278,8 +277,6 @@ if (seletorIdioma) {
         alterarIdioma(seletorIdioma.value);
     });
 }
-
-atualizarIdioma();
 
 /* ============ ELEMENTOS ============ */
 
@@ -354,7 +351,6 @@ function formatarResposta(texto) {
                 html: true
             }
         });
-
     } catch (erro) {
         console.error("Erro ao formatar resposta:", erro);
         return null;
@@ -373,7 +369,6 @@ function voltarParaLogin() {
 async function iniciar() {
     try {
         const { data, error } = await clienteSupabase.auth.getSession();
-
         const sessao = !error && data && data.session;
 
         if (!sessao) {
@@ -399,14 +394,12 @@ async function iniciar() {
         atualizarHistorico();
 
         if (carregando) carregando.remove();
-
         if (app) app.hidden = false;
 
         if (campoMensagem) {
             campoMensagem.focus();
             ajustarAlturaCampo();
         }
-
     } catch (erro) {
         console.error("Erro ao iniciar o chat:", erro);
         voltarParaLogin();
@@ -459,7 +452,6 @@ async function chamarApi(url, opcoes) {
             },
             body: config.body
         });
-
     } catch (erro) {
         throw new Error(t("serverOffline"));
     }
@@ -497,7 +489,6 @@ function carregarConversasSalvas() {
         const dados = JSON.parse(bruto || "[]");
 
         conversas = Array.isArray(dados) ? dados : [];
-
     } catch (erro) {
         conversas = [];
     }
@@ -509,7 +500,6 @@ function salvarConversas() {
             chaveConversas(),
             JSON.stringify(conversas)
         );
-
     } catch (erro) {
         console.error("Não foi possível salvar as conversas:", erro);
     }
@@ -524,7 +514,6 @@ function criarMensagem(texto, tipo) {
 
     if (tipo === "vortex") {
         const conteudo = document.createElement("div");
-
         conteudo.className = "conteudo-mensagem";
 
         const htmlFormatado = formatarResposta(texto);
@@ -539,7 +528,6 @@ function criarMensagem(texto, tipo) {
 
         const acoes = document.createElement("div");
         acoes.className = "mensagem-acoes";
-
     } else {
         mensagem.textContent = texto;
     }
@@ -586,7 +574,6 @@ async function gerarPDF(conteudo, botao) {
         botao.innerHTML = t("generatingPdf");
 
         const areaPDF = document.createElement("div");
-
         areaPDF.className = "documento-pdf";
 
         const titulo = document.createElement("h1");
@@ -599,7 +586,6 @@ async function gerarPDF(conteudo, botao) {
         data.textContent = new Date().toLocaleString(obterLocale());
 
         const separador = document.createElement("hr");
-
         const conteudoClonado = conteudo.cloneNode(true);
 
         areaPDF.appendChild(titulo);
@@ -669,11 +655,9 @@ async function gerarPDF(conteudo, botao) {
             .save();
 
         areaPDF.remove();
-
     } catch (erro) {
         console.error("Erro ao gerar PDF:", erro);
         alert(t("pdfGenerationError"));
-
     } finally {
         const documento = document.querySelector(".documento-pdf");
 
@@ -793,7 +777,6 @@ async function extrairTextoPDF(arquivo) {
             );
 
             textoCompleto += "\n\n" + t("pdfTextLimit");
-
             break;
         }
     }
@@ -865,13 +848,11 @@ async function selecionarPDF(event) {
                 pages: resultado.paginas
             })
         );
-
     } catch (erro) {
         console.error("Erro ao ler PDF:", erro);
 
         removerPDF();
         alert(erro.message || t("pdfReadError"));
-
     } finally {
         processandoPDF = false;
 
@@ -1042,10 +1023,10 @@ async function limparTodaMemoria() {
 }
 
 const PADRAO_GUARDAR =
-    /^(?:vortex[,:]\s*)?(?:lembre-se(?:\s+de)?|guarde|memorize|não\s+esqueça|remember(?:\s+that)?|save|memorize|recuerda(?:\s+que)?|guarda|memoriza)(?:\s+que)?\s*[:,\-]?\s*(.+)$/i;
+    /^(?:vortex[,:]\s*)?(?:lembre-se(?:\s+de)?|guarde|memorize|não\s+esqueça|remember(?:\s+that)?|save|memorize|recuerda(?:\s+que)?|guarda|memoriza)(?:\s+que)?\s*[:,\\-]?\s*(.+)$/i;
 
 const PADRAO_ESQUECER =
-    /^(?:vortex[,:]\s*)?(?:esqueça|apague|remova|exclua|forget|delete|remove|olvida|borra|elimina)(?:\s+que)?\s*[:,\-]?\s*(.+)$/i;
+    /^(?:vortex[,:]\s*)?(?:esqueça|apague|remova|exclua|forget|delete|remove|olvida|borra|elimina)(?:\s+que)?\s*[:,\\-]?\s*(.+)$/i;
 
 const PADRAO_CONSULTAR =
     /^(?:vortex[,:]\s*)?(?:o\s+que\s+você\s+lembra|o\s+que\s+sabe\s+sobre\s+mim|mostre\s+sua\s+memória|consultar\s+memória|ver\s+memória|what\s+do\s+you\s+remember|what\s+do\s+you\s+know\s+about\s+me|show\s+your\s+memory|check\s+memory|qué\s+recuerdas|qué\s+sabes\s+de\s+mí|muestra\s+tu\s+memoria|consultar\s+memoria|ver\s+memoria)/i;
@@ -1222,7 +1203,6 @@ async function enviarMensagem(event) {
         });
 
         salvarConversa();
-
         removerPDF();
 
     } catch (erro) {
@@ -1351,7 +1331,6 @@ async function sair() {
 
     try {
         await clienteSupabase.auth.signOut();
-
     } catch (erro) {
         console.error("Erro ao encerrar sessão:", erro);
     }
