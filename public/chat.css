@@ -317,6 +317,49 @@ body {
     box-shadow: 0 0 8px #22c55e;
 }
 
+/* ======= SELETOR DE IDIOMA ======= */
+
+.chat-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-shrink: 0;
+}
+
+.seletor-idioma-label {
+    font-size: 12px;
+    color: var(--texto-suave);
+}
+
+.seletor-idioma {
+    min-width: 118px;
+    padding: 9px 30px 9px 12px;
+
+    font-family: "Inter", sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--texto);
+
+    background: rgba(0, 123, 255, 0.10);
+    border: 1px solid var(--borda);
+    border-radius: 20px;
+
+    outline: none;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.seletor-idioma:hover,
+.seletor-idioma:focus {
+    border-color: var(--ciano);
+    box-shadow: 0 0 10px rgba(0, 200, 255, 0.15);
+}
+
+.seletor-idioma option {
+    color: #e6eefb;
+    background: #071426;
+}
+
 /* ======= MENSAGENS ======= */
 
 .mensagens {
@@ -919,6 +962,17 @@ body.tema-claro .arquivo-pdf-status {
     background: rgba(0, 123, 255, 0.07);
 }
 
+body.tema-claro .seletor-idioma {
+    color: #1b2a44;
+    background: rgba(0, 123, 255, 0.07);
+    border-color: rgba(0, 102, 187, 0.25);
+}
+
+body.tema-claro .seletor-idioma option {
+    color: #1b2a44;
+    background: #ffffff;
+}
+
 /* ======= RESPONSIVO ======= */
 
 @media (max-width: 760px) {
@@ -927,8 +981,6 @@ body.tema-claro .arquivo-pdf-status {
         height: 100dvh;
         min-height: 0;
     }
-
-    /* Barra lateral compacta com ícones */
 
     .sidebar {
         width: 64px;
@@ -982,16 +1034,12 @@ body.tema-claro .arquivo-pdf-status {
         font-size: 18px;
     }
 
-    /* Área principal */
-
     .conteudo {
         flex: 1;
         min-width: 0;
         min-height: 0;
         height: 100%;
     }
-
-    /* Cabeçalho */
 
     .chat-header {
         min-height: 58px;
@@ -1017,7 +1065,19 @@ body.tema-claro .arquivo-pdf-status {
         font-size: 11px;
     }
 
-    /* Mensagens */
+    .chat-header-actions {
+        gap: 5px;
+    }
+
+    .seletor-idioma-label {
+        display: none;
+    }
+
+    .seletor-idioma {
+        min-width: 105px;
+        padding: 8px 25px 8px 9px;
+        font-size: 12px;
+    }
 
     .mensagens {
         flex: 1;
@@ -1042,8 +1102,6 @@ body.tema-claro .arquivo-pdf-status {
     .boas-vindas p {
         font-size: 15px;
     }
-
-    /* Campo de digitação */
 
     .chat-form,
     .form-chat {
@@ -1089,8 +1147,6 @@ body.tema-claro .arquivo-pdf-status {
         height: 19px;
     }
 
-    /* PDF selecionado */
-
     .arquivo-pdf-status {
         width: auto;
         max-width: none;
@@ -1100,8 +1156,6 @@ body.tema-claro .arquivo-pdf-status {
 
         font-size: 12px;
     }
-
-    /* Formatação das respostas */
 
     .conteudo-mensagem {
         min-width: 0;
@@ -1181,6 +1235,11 @@ body.tema-claro .arquivo-pdf-status {
     .campo-mensagem {
         font-size: 16px;
         min-height: 40px;
+    }
+
+    .seletor-idioma {
+        min-width: 92px;
+        font-size: 11px;
     }
 }
 

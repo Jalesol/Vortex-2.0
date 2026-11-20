@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 
@@ -21,7 +22,7 @@
 <body>
 
     <div class="tela-carregando" id="carregando">
-        <p>Verificando sua sessão...</p>
+        <p data-i18n="checkingSession">Verificando sua sessão...</p>
     </div>
 
     <div class="app" id="app" hidden>
@@ -35,14 +36,14 @@
                     <span class="brand-name">VORTEX</span>
                 </div>
 
-                <p class="brand-tag">Sua IA, sempre com você.</p>
+                <p class="brand-tag" data-i18n="brandTag">Sua IA, sempre com você.</p>
 
                 <button class="btn-novo-chat" id="novo-chat" type="button">
                     <span class="icone">+</span>
-                    <span>Novo chat</span>
+                    <span data-i18n="newChat">Novo chat</span>
                 </button>
 
-                <div class="historico-titulo">
+                <div class="historico-titulo" data-i18n="chatHistory">
                     <span class="icone-relogio">◷</span>
                     Histórico de conversas
                 </div>
@@ -55,12 +56,12 @@
 
                 <button class="btn-lateral" id="alternar-tema" type="button">
                     <span class="icone">☼</span>
-                    <span>Alternar tema</span>
+                    <span data-i18n="toggleTheme">Alternar tema</span>
                 </button>
 
                 <button class="btn-lateral" id="sair" type="button">
                     <span class="icone">⇥</span>
-                    <span>Sair</span>
+                    <span data-i18n="signOut">Sair</span>
                 </button>
 
             </div>
@@ -76,14 +77,26 @@
                     <span class="avatar-v">V</span>
 
                     <div>
-                        <h2>Vortex IA</h2>
+                        <h2>Vortex AI</h2>
 
                         <span class="status">
                             <i class="dot"></i>
-                            Online
+                            <span data-i18n="online">Online</span>
                         </span>
                     </div>
 
+                </div>
+
+                <div class="chat-header-actions">
+                    <label class="seletor-idioma-label" for="idioma-chat" data-i18n="language">
+                        Idioma
+                    </label>
+
+                    <select id="idioma-chat" class="seletor-idioma" aria-label="Selecionar idioma">
+                        <option value="pt">Português</option>
+                        <option value="en">English</option>
+                        <option value="es">Español</option>
+                    </select>
                 </div>
 
             </header>
@@ -97,7 +110,7 @@
 
                 <div class="boas-vindas" id="boas-vindas">
                     <h1 id="saudacao">Olá!</h1>
-                    <p>Como posso te ajudar hoje?</p>
+                    <p data-i18n="welcomeSubtitle">Como posso te ajudar hoje?</p>
                 </div>
 
             </section>
@@ -114,6 +127,8 @@
                     id="remover-pdf"
                     title="Remover PDF"
                     aria-label="Remover PDF"
+                    data-i18n-title="removePdf"
+                    data-i18n-aria="removePdf"
                 >
                     ×
                 </button>
@@ -135,6 +150,8 @@
                     id="btn-anexar"
                     title="Anexar documento PDF"
                     aria-label="Anexar documento PDF"
+                    data-i18n-title="attachPdf"
+                    data-i18n-aria="attachPdf"
                 >
                     <svg
                         viewBox="0 0 24 24"
@@ -159,6 +176,8 @@
                     id="btn-microfone"
                     title="Falar com a Vortex"
                     aria-label="Iniciar reconhecimento de voz"
+                    data-i18n-title="speakToVortex"
+                    data-i18n-aria="startVoiceRecognition"
                 >
                     <svg
                         viewBox="0 0 24 24"
@@ -183,6 +202,7 @@
                     id="mensagem"
                     class="campo-mensagem"
                     placeholder="Converse com a Vortex..."
+                    data-i18n-placeholder="messagePlaceholder"
                     autocomplete="off"
                     rows="1"
                 ></textarea>
@@ -193,6 +213,8 @@
                     class="btn-enviar"
                     title="Enviar mensagem"
                     aria-label="Enviar mensagem"
+                    data-i18n-title="sendMessage"
+                    data-i18n-aria="sendMessage"
                 >
                     <svg
                         viewBox="0 0 24 24"
