@@ -1,10 +1,11 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vortex</title>
+    <title>Vortex AI</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -17,8 +18,8 @@
             <!-- MENU PRIMÁRIO -->
             <nav class="menu-primario">
                 <ul>
-                    <li><a href="#">Home</a></li>
-                    <li><a href="#">Sobre</a></li>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="sobre.html">Sobre</a></li>
                     <li><a href="#">Blog</a></li>
                     <li><a href="#">Contato</a></li>
                 </ul>
@@ -34,8 +35,17 @@
                 </select>
 
                 <ul>
-                    <li><button type="button" class="link-entrar" id="ir-login">Entrar</button></li>
-                    <li><button type="button" class="btn-register" id="ir-register">Register</button></li>
+                    <li>
+                        <button type="button" class="link-entrar" id="ir-login">
+                            Entrar
+                        </button>
+                    </li>
+
+                    <li>
+                        <button type="button" class="btn-register" id="ir-register">
+                            Register
+                        </button>
+                    </li>
                 </ul>
 
             </nav>
@@ -74,11 +84,15 @@
                     >
                 </label>
 
-                <a href="#" id="link-recuperar">Esqueceu sua senha?</a>
+                <a href="#" id="link-recuperar">
+                    Esqueceu sua senha?
+                </a>
 
                 <p class="mensagem-erro" id="erro-login" role="alert"></p>
 
-                <button type="submit" id="btn-entrar">Entrar</button>
+                <button type="submit" id="btn-entrar">
+                    Entrar
+                </button>
 
                 <hr>
 
@@ -127,7 +141,9 @@
 
                 <p class="mensagem-erro" id="erro-register" role="alert"></p>
 
-                <button type="submit" id="btn-register">Criar minha conta</button>
+                <button type="submit" id="btn-register">
+                    Criar minha conta
+                </button>
 
                 <hr>
 
@@ -135,19 +151,29 @@
 
             <!-- LOGIN SOCIAL -->
             <div class="login">
+
                 <p>Ou continue com</p>
 
                 <div class="botoes-sociais">
-                    <button type="button" class="botao-social" id="login-google" title="Entrar com Google">
-                        <img src="assets/img/icons8-google-logo-48.png" alt="Google">
+
+                    <!-- GOOGLE -->
+                    <button
+                        type="button"
+                        class="botao-social"
+                        id="login-google"
+                        title="Entrar com Google"
+                        aria-label="Entrar com Google"
+                    >
+                        <img
+                            src="assets/img/icons8-google-logo-48.png"
+                            alt="Google"
+                        >
                     </button>
 
-                    <button type="button" class="botao-social" id="login-facebook" title="Entrar com Facebook">
-                        <img src="assets/img/icons8-facebook-novo-48.png" alt="Facebook">
-                    </button>
                 </div>
 
                 <p class="aviso-social" id="aviso-social" role="status"></p>
+
             </div>
 
         </section>

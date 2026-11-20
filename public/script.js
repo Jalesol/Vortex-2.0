@@ -1,3 +1,4 @@
+
 /* =================================
    VORTEX 2.0 - SISTEMA DE LOGIN
    Supabase Auth
@@ -6,7 +7,10 @@
 const SUPABASE_URL = "https://ytoykihtjcsttnmizbou.supabase.co";
 const SUPABASE_KEY = "sb_publishable_7TFboQCIOTNwKLWsTlmTXg_jFCRM-IH";
 
-const clienteSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const clienteSupabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
 
 // ELEMENTOS
 const formLogin = document.querySelector("#form-login");
@@ -27,7 +31,6 @@ const irLogin = document.querySelector("#ir-login");
 const irRegister = document.querySelector("#ir-register");
 
 const btnGoogle = document.querySelector("#login-google");
-const btnFacebook = document.querySelector("#login-facebook");
 const avisoSocial = document.querySelector("#aviso-social");
 const linkRecuperar = document.querySelector("#link-recuperar");
 
@@ -37,6 +40,7 @@ let indoParaChat = false;
 
 function irParaChat() {
     if (indoParaChat) return;
+
     indoParaChat = true;
     window.location.replace("chat.html");
 }
@@ -51,12 +55,14 @@ function emailValido(email) {
 
 function limparErro(elemento) {
     if (!elemento) return;
+
     elemento.textContent = "";
     elemento.style.color = "#FF6470";
 }
 
 function mostrarErro(elemento, mensagem) {
     if (!elemento) return;
+
     elemento.style.color = "#FF6470";
     elemento.textContent = mensagem;
     elemento.hidden = false;
@@ -64,6 +70,7 @@ function mostrarErro(elemento, mensagem) {
 
 function mostrarSucesso(elemento, mensagem) {
     if (!elemento) return;
+
     elemento.style.color = "#00C8FF";
     elemento.textContent = mensagem;
     elemento.hidden = false;
@@ -71,6 +78,7 @@ function mostrarSucesso(elemento, mensagem) {
 
 function marcarInvalido(campo, invalido) {
     if (!campo) return;
+
     campo.classList.toggle("campo-invalido", invalido);
 }
 
@@ -95,7 +103,10 @@ function traduzirErro(mensagem) {
         return "A senha precisa ter pelo menos 8 caracteres.";
     }
 
-    if (texto.includes("unable to validate email") || texto.includes("invalid email")) {
+    if (
+        texto.includes("unable to validate email") ||
+        texto.includes("invalid email")
+    ) {
         return "Digite um e-mail válido.";
     }
 
@@ -103,7 +114,10 @@ function traduzirErro(mensagem) {
         return "Muitas tentativas seguidas. Aguarde um minuto e tente de novo.";
     }
 
-    if (texto.includes("failed to fetch") || texto.includes("network")) {
+    if (
+        texto.includes("failed to fetch") ||
+        texto.includes("network")
+    ) {
         return "Não foi possível conectar. Verifique sua internet.";
     }
 
@@ -119,21 +133,30 @@ function traduzirErro(mensagem) {
 function mostrarLogin() {
     if (formRegister) formRegister.hidden = true;
     if (formLogin) formLogin.hidden = false;
+
     limparErro(erroLogin);
     limparErro(erroRegister);
+
     if (campoEmail) campoEmail.focus();
 }
 
 function mostrarRegister() {
     if (formLogin) formLogin.hidden = true;
     if (formRegister) formRegister.hidden = false;
+
     limparErro(erroLogin);
     limparErro(erroRegister);
+
     if (campoNome) campoNome.focus();
 }
 
-if (irLogin) irLogin.addEventListener("click", mostrarLogin);
-if (irRegister) irRegister.addEventListener("click", mostrarRegister);
+if (irLogin) {
+    irLogin.addEventListener("click", mostrarLogin);
+}
+
+if (irRegister) {
+    irRegister.addEventListener("click", mostrarRegister);
+}
 
 /* ============ LOGIN ============ */
 
@@ -158,8 +181,12 @@ if (formLogin) {
 
         if (senha.length < 8) {
             if (!temErro) {
-                mostrarErro(erroLogin, "A senha precisa ter pelo menos 8 caracteres.");
+                mostrarErro(
+                    erroLogin,
+                    "A senha precisa ter pelo menos 8 caracteres."
+                );
             }
+
             marcarInvalido(campoSenha, true);
             temErro = true;
         } else {
@@ -172,10 +199,11 @@ if (formLogin) {
         btnEntrar.textContent = "Entrando...";
 
         try {
-            const { data, error } = await clienteSupabase.auth.signInWithPassword({
-                email: email,
-                password: senha
-            });
+            const { data, error } =
+                await clienteSupabase.auth.signInWithPassword({
+                    email: email,
+                    password: senha
+                });
 
             if (error) {
                 console.error("Erro do Supabase no login:", error);
@@ -184,7 +212,10 @@ if (formLogin) {
             }
 
             if (!data.session) {
-                mostrarErro(erroLogin, "Não foi possível iniciar a sessão. Tente novamente.");
+                mostrarErro(
+                    erroLogin,
+                    "Não foi possível iniciar a sessão. Tente novamente."
+                );
                 return;
             }
 
@@ -193,7 +224,11 @@ if (formLogin) {
 
         } catch (erro) {
             console.error("Erro no login:", erro);
-            mostrarErro(erroLogin, "Não foi possível conectar. Tente novamente.");
+
+            mostrarErro(
+                erroLogin,
+                "Não foi possível conectar. Tente novamente."
+            );
 
         } finally {
             if (!indoParaChat) {
@@ -230,6 +265,7 @@ if (formRegister) {
             if (!temErro) {
                 mostrarErro(erroRegister, "Digite um e-mail válido.");
             }
+
             marcarInvalido(campoEmailRegister, true);
             temErro = true;
         } else {
@@ -238,8 +274,12 @@ if (formRegister) {
 
         if (senha.length < 8) {
             if (!temErro) {
-                mostrarErro(erroRegister, "A senha precisa ter pelo menos 8 caracteres.");
+                mostrarErro(
+                    erroRegister,
+                    "A senha precisa ter pelo menos 8 caracteres."
+                );
             }
+
             marcarInvalido(campoSenhaRegister, true);
             temErro = true;
         } else {
@@ -252,13 +292,14 @@ if (formRegister) {
         btnRegister.textContent = "Criando conta...";
 
         try {
-            const { data, error } = await clienteSupabase.auth.signUp({
-                email: email,
-                password: senha,
-                options: {
-                    data: { nome: nome }
-                }
-            });
+            const { data, error } =
+                await clienteSupabase.auth.signUp({
+                    email: email,
+                    password: senha,
+                    options: {
+                        data: { nome: nome }
+                    }
+                });
 
             if (error) {
                 console.error("Erro do Supabase no cadastro:", error);
@@ -266,8 +307,15 @@ if (formRegister) {
                 return;
             }
 
-            if (data.user && data.user.identities && data.user.identities.length === 0) {
-                mostrarErro(erroRegister, "Este e-mail já tem uma conta. Tente entrar.");
+            if (
+                data.user &&
+                data.user.identities &&
+                data.user.identities.length === 0
+            ) {
+                mostrarErro(
+                    erroRegister,
+                    "Este e-mail já tem uma conta. Tente entrar."
+                );
                 return;
             }
 
@@ -280,11 +328,16 @@ if (formRegister) {
                 erroRegister,
                 "Conta criada! Confirme seu e-mail para poder entrar."
             );
+
             formRegister.reset();
 
         } catch (erro) {
             console.error("Erro no cadastro:", erro);
-            mostrarErro(erroRegister, "Não foi possível conectar. Tente novamente.");
+
+            mostrarErro(
+                erroRegister,
+                "Não foi possível conectar. Tente novamente."
+            );
 
         } finally {
             if (!indoParaChat) {
@@ -295,47 +348,55 @@ if (formRegister) {
     });
 }
 
-/* ============ LOGIN SOCIAL ============ */
+/* ============ LOGIN COM GOOGLE ============ */
 
-async function entrarComProvedor(provedor) {
+async function entrarComGoogle() {
     if (avisoSocial) {
-        avisoSocial.textContent = "Redirecionando...";
+        avisoSocial.textContent = "Redirecionando para o Google...";
+    }
+
+    if (btnGoogle) {
+        btnGoogle.disabled = true;
     }
 
     try {
-        const { error } = await clienteSupabase.auth.signInWithOAuth({
-            provider: provedor,
-            options: {
-                redirectTo: window.location.origin + "/chat.html"
-            }
-        });
+        const { error } =
+            await clienteSupabase.auth.signInWithOAuth({
+                provider: "google",
+                options: {
+                    redirectTo: window.location.origin + "/chat.html"
+                }
+            });
 
         if (error) {
-            console.error("Erro no login social:", error);
+            console.error("Erro no login com Google:", error);
+
             if (avisoSocial) {
-                avisoSocial.textContent = "Login com " +
-                    (provedor === "google" ? "Google" : "Facebook") +
-                    " ainda não está configurado no projeto.";
+                avisoSocial.textContent =
+                    "Não foi possível entrar com o Google. Tente novamente.";
+            }
+
+            if (btnGoogle) {
+                btnGoogle.disabled = false;
             }
         }
+
     } catch (erro) {
-        console.error("Erro no login social:", erro);
+        console.error("Erro no login com Google:", erro);
+
         if (avisoSocial) {
-            avisoSocial.textContent = "Não foi possível iniciar o login social.";
+            avisoSocial.textContent =
+                "Não foi possível iniciar o login com Google.";
+        }
+
+        if (btnGoogle) {
+            btnGoogle.disabled = false;
         }
     }
 }
 
 if (btnGoogle) {
-    btnGoogle.addEventListener("click", function () {
-        entrarComProvedor("google");
-    });
-}
-
-if (btnFacebook) {
-    btnFacebook.addEventListener("click", function () {
-        entrarComProvedor("facebook");
-    });
+    btnGoogle.addEventListener("click", entrarComGoogle);
 }
 
 /* ============ RECUPERAR SENHA ============ */
@@ -347,23 +408,42 @@ if (linkRecuperar) {
         const email = campoEmail.value.trim();
 
         if (!emailValido(email)) {
-            mostrarErro(erroLogin, "Digite seu e-mail acima para recuperar a senha.");
+            mostrarErro(
+                erroLogin,
+                "Digite seu e-mail acima para recuperar a senha."
+            );
+
             marcarInvalido(campoEmail, true);
             return;
         }
 
         limparErro(erroLogin);
 
-        const { error } = await clienteSupabase.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin + "/redefinir-senha.html"
-        });
+        try {
+            const { error } =
+                await clienteSupabase.auth.resetPasswordForEmail(email, {
+                    redirectTo:
+                        window.location.origin + "/redefinir-senha.html"
+                });
 
-        if (error) {
-            mostrarErro(erroLogin, traduzirErro(error.message));
-            return;
+            if (error) {
+                mostrarErro(erroLogin, traduzirErro(error.message));
+                return;
+            }
+
+            mostrarSucesso(
+                erroLogin,
+                "Enviei um link de recuperação para o seu e-mail."
+            );
+
+        } catch (erro) {
+            console.error("Erro ao recuperar senha:", erro);
+
+            mostrarErro(
+                erroLogin,
+                "Não foi possível enviar o link. Tente novamente."
+            );
         }
-
-        mostrarSucesso(erroLogin, "Enviei um link de recuperação para o seu e-mail.");
     });
 }
 
@@ -372,8 +452,9 @@ if (linkRecuperar) {
 /*
    Só manda para o chat quando o servidor confirma o usuário.
    getSession() sozinho não serve: ele pode devolver um token
-   vencido por um instante, o que causava o vaivém entre telas.
+   vencido por um instante.
 */
+
 async function temSessaoValida() {
     try {
         const { data, error } = await clienteSupabase.auth.getUser();
