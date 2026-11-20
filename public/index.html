@@ -18,32 +18,32 @@
             <!-- MENU PRIMÁRIO -->
             <nav class="menu-primario">
                 <ul>
-                    <li><a href="index.html">Home</a></li>
-                    <li><a href="sobre.html">Sobre</a></li>
-                    <li><a href="#">Blog</a></li>
-                    <li><a href="#">Contato</a></li>
+                    <li><a href="index.html" data-i18n="nav_home">Home</a></li>
+                    <li><a href="sobre.html" data-i18n="nav_about">Sobre</a></li>
+                    <li><a href="#" data-i18n="nav_blog">Blog</a></li>
+                    <li><a href="#" data-i18n="nav_contact">Contato</a></li>
                 </ul>
             </nav>
 
             <!-- MENU SECUNDÁRIO -->
             <nav class="menu-secundario">
 
-                <select name="idioma" id="Idioma">
+                <select name="idioma" id="Idioma" aria-label="Selecionar idioma">
                     <option value="pt">Português</option>
-                    <option value="en">Inglês</option>
-                    <option value="es">Espanhol</option>
+                    <option value="en">English</option>
+                    <option value="es">Español</option>
                 </select>
 
                 <ul>
                     <li>
-                        <button type="button" class="link-entrar" id="ir-login">
+                        <button type="button" class="link-entrar" id="ir-login" data-i18n="nav_login">
                             Entrar
                         </button>
                     </li>
 
                     <li>
-                        <button type="button" class="btn-register" id="ir-register">
-                            Register
+                        <button type="button" class="btn-register" id="ir-register" data-i18n="nav_register">
+                            Cadastrar
                         </button>
                     </li>
                 </ul>
@@ -58,39 +58,41 @@
             <!-- LOGIN -->
             <form id="form-login" novalidate>
 
-                <h2 class="form-titulo">Entrar na Vortex</h2>
+                <h2 class="form-titulo" data-i18n="login_title">Entrar na Vortex</h2>
 
                 <label class="campo">
-                    <span class="campo-rotulo">E-mail</span>
+                    <span class="campo-rotulo" data-i18n="label_email">E-mail</span>
                     <input
                         type="email"
                         name="email"
                         id="email"
                         placeholder="Digite seu e-mail"
+                        data-i18n-placeholder="placeholder_email"
                         autocomplete="email"
                         required
                     >
                 </label>
 
                 <label class="campo">
-                    <span class="campo-rotulo">Senha</span>
+                    <span class="campo-rotulo" data-i18n="label_password">Senha</span>
                     <input
                         type="password"
                         name="password"
                         id="password"
                         placeholder="Digite sua senha"
+                        data-i18n-placeholder="placeholder_password"
                         autocomplete="current-password"
                         required
                     >
                 </label>
 
-                <a href="#" id="link-recuperar">
+                <a href="#" id="link-recuperar" data-i18n="forgot_password">
                     Esqueceu sua senha?
                 </a>
 
                 <p class="mensagem-erro" id="erro-login" role="alert"></p>
 
-                <button type="submit" id="btn-entrar">
+                <button type="submit" id="btn-entrar" data-i18n="login_button">
                     Entrar
                 </button>
 
@@ -101,39 +103,42 @@
             <!-- CADASTRO -->
             <form id="form-register" novalidate hidden>
 
-                <h2 class="form-titulo">Criar conta</h2>
+                <h2 class="form-titulo" data-i18n="register_title">Criar conta</h2>
 
                 <label class="campo">
-                    <span class="campo-rotulo">Nome</span>
+                    <span class="campo-rotulo" data-i18n="label_name">Nome</span>
                     <input
                         type="text"
                         name="nome"
                         id="nome"
                         placeholder="Como podemos te chamar?"
+                        data-i18n-placeholder="placeholder_name"
                         autocomplete="name"
                         required
                     >
                 </label>
 
                 <label class="campo">
-                    <span class="campo-rotulo">E-mail</span>
+                    <span class="campo-rotulo" data-i18n="label_email">E-mail</span>
                     <input
                         type="email"
                         name="email-register"
                         id="email-register"
                         placeholder="Digite seu e-mail"
+                        data-i18n-placeholder="placeholder_email"
                         autocomplete="email"
                         required
                     >
                 </label>
 
                 <label class="campo">
-                    <span class="campo-rotulo">Senha</span>
+                    <span class="campo-rotulo" data-i18n="label_password">Senha</span>
                     <input
                         type="password"
                         name="password-register"
                         id="password-register"
                         placeholder="Mínimo de 8 caracteres"
+                        data-i18n-placeholder="placeholder_new_password"
                         autocomplete="new-password"
                         required
                     >
@@ -141,7 +146,7 @@
 
                 <p class="mensagem-erro" id="erro-register" role="alert"></p>
 
-                <button type="submit" id="btn-register">
+                <button type="submit" id="btn-register" data-i18n="register_button">
                     Criar minha conta
                 </button>
 
@@ -152,7 +157,7 @@
             <!-- LOGIN SOCIAL -->
             <div class="login">
 
-                <p>Ou continue com</p>
+                <p data-i18n="continue_with">Ou continue com</p>
 
                 <div class="botoes-sociais">
 
@@ -163,6 +168,8 @@
                         id="login-google"
                         title="Entrar com Google"
                         aria-label="Entrar com Google"
+                        data-i18n-title="google_login"
+                        data-i18n-aria-label="google_login"
                     >
                         <img
                             src="assets/img/icons8-google-logo-48.png"
